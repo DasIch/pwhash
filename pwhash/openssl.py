@@ -10,7 +10,10 @@ from threading import Lock
 
 from cffi import FFI
 
+
 _OPENSSL_LOCK = Lock()
+
+METHODS = frozenset(["hmac-sha1"])
 
 
 ffi = FFI()
@@ -27,7 +30,7 @@ openssl = ffi.verify("#include <openssl/evp.h>")
 
 
 def pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
-    if method != "hmac-sha1":
+    if method not in METHODS:
         raise NotImplementedError("%s is not a supported method")
     hash = ffi.new("unsigned char[]", hash_length)
     with _OPENSSL_LOCK:
