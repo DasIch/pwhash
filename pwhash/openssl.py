@@ -1,7 +1,7 @@
 # coding: utf-8
 """
-    pwhash
-    ~~~~~~
+    pwhash.openssl
+    ~~~~~~~~~~~~~~
 
     :copyright: 2012 by Daniel Neuhäuser
     :license: BSD

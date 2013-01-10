@@ -1,7 +1,7 @@
 # coding: utf-8
 from setuptools import setup
 
-import pwhash
+import pwhash.openssl
 
 
 setup(
@@ -11,8 +11,8 @@ setup(
     author="Daniel Neuhäuser",
     author_email="dasdasich@gmail.com",
     description="simple safe password hashing",
-    py_modules=["pwhash"],
+    packages=["pwhash"],
     install_requires=["cffi"],
     zip_safe=False,
-    ext_modules=[pwhash.ffi.verifier.get_extension()]
+    ext_modules=[pwhash.openssl.ffi.verifier.get_extension()]
 )

@@ -1,12 +1,12 @@
 # coding: utf-8
 """
-    test_pwhash
-    ~~~~~~~~~~~
+    test_openssl
+    ~~~~~~~~~~~~
 
     :copyright: 2012 by Daniel Neuhäuser
     :license: BSD
 """
-from pwhash import pbkdf2
+from pwhash.openssl import pbkdf2
 
 
 TEST_VECTORS = [
