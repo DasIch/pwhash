@@ -8,10 +8,14 @@
 """
 from pwhash.commoncrypto import pbkdf2
 
-from pwhash.tests.utils import TEST_VECTORS
+from pwhash.tests.utils import PBKDF2_TEST_VECTORS
 
 
 def test_pbkdf2():
-    for password, salt, rounds, hash_length, expected_hash in TEST_VECTORS:
-        hash = pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1")
-        assert hash == expected_hash
+    for password, salt, rounds, hash_length, expected_hashes in PBKDF2_TEST_VECTORS:
+        for method, expected_hash in expected_hashes.iteritems():
+            try:
+                hash = pbkdf2(password, salt, rounds, hash_length, method)
+                assert hash == expected_hash
+            except NotImplementedError:
+                pass
