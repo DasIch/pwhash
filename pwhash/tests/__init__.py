@@ -1,8 +1,8 @@
 # coding: utf-8
 """
-    pwhash
-    ~~~~~~
+    pwhash.tests
+    ~~~~~~~~~~~~
 
     :copyright: 2012 by Daniel Neuhäuser
-    :license: BSD
+    :licence: BSD
 """

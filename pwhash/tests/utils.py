@@ -1,12 +1,4 @@
 # coding: utf-8
-"""
-    test_openssl
-    ~~~~~~~~~~~~
-
-    :copyright: 2012 by Daniel Neuhäuser
-    :license: BSD
-"""
-from pwhash.openssl import pbkdf2
 
 
 TEST_VECTORS = [
@@ -30,9 +22,3 @@ TEST_VECTORS = [
         "eefe3d61cd4da4e4e9945b3d6ba2158c2634e984"
     )
 ]
-
-
-def test_pbkdf2():
-    for password, salt, rounds, hash_length, expected_hash in TEST_VECTORS:
-        hash = pbkdf2(password, salt, rounds, hash_length)
-        assert hash == expected_hash

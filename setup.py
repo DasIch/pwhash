@@ -2,6 +2,7 @@
 from setuptools import setup
 
 import pwhash.openssl
+import pwhash.commoncrypto
 
 
 setup(
@@ -11,8 +12,11 @@ setup(
     author="Daniel Neuhäuser",
     author_email="dasdasich@gmail.com",
     description="simple safe password hashing",
-    packages=["pwhash"],
+    packages=["pwhash", "pwhash.tests"],
     install_requires=["cffi"],
     zip_safe=False,
-    ext_modules=[pwhash.openssl.ffi.verifier.get_extension()]
+    ext_modules=[
+        pwhash.openssl.ffi.verifier.get_extension(),
+        pwhash.commoncrypto.ffi.verifier.get_extension()
+    ]
 )
