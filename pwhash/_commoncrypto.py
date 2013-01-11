@@ -45,22 +45,35 @@ ffi.cdef("""
         unsigned int rounds,
         uint8_t *derivedKey, size_t derivedKeyLen
     ); // returns 0 on success
+
+    unsigned int CCCalibratePBKDF(
+        CCPBKDFAlgorithm algorithm,
+        size_t passwordLen,
+        size_t saltLen,
+        CCPseudoRandomAlgorithm prf,
+        size_t derivedKeyLen,
+        uint32_t msec
+    );
 """)
 common_key_derivation = ffi.verify(
     "#include <CommonCrypto/CommonKeyDerivation.h>"
 )
 
 
-def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
+def get_prf(method):
     if method not in METHODS:
         raise NotImplementedError("%s is not a supported method" % method)
+    return METHODS[method]
+
+
+def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
     hash = ffi.new("uint8_t []", hash_length)
     with _COMMONCRYPTO_LOCK:
         result = common_key_derivation.CCKeyDerivationPBKDF(
             kCCPBKDF2,
             password, len(password),
             ffi.new("const uint8_t []", salt), len(salt),
-            METHODS[method],
+            get_prf(method),
             rounds,
             hash,
             hash_length
@@ -68,3 +81,23 @@ def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
     if result != 0:
         raise RuntimeError("something went wrong")
     return b"".join(ffi.buffer(hash)).encode("hex")
+
+
+def _determine_pbkdf2_rounds(password_length, salt_length, hash_length, method, duration):
+    for argument, name in [
+        (password_length, "password_length"),
+        (salt_length, "salt_length"),
+        (hash_length, "hash_length"),
+        (duration, "duration")
+        ]:
+        if not isinstance(argument, int):
+            raise TypeError("%s must be an int, got %r" % argument.__class__)
+    with _COMMONCRYPTO_LOCK:
+        return common_key_derivation.CCCalibratePBKDF(
+            kCCPBKDF2,
+            password_length,
+            salt_length,
+            get_prf(method),
+            hash_length,
+            duration
+        )
