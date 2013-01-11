@@ -28,9 +28,11 @@ else:
         #       are different on each platform. However if precision is an
         #       issue this might need to be done.
         round_measure = 10000
-        password = os.urandom(password_length)
-        salt = os.urandom(salt_length)
-        for _ in xrange(5):
+        arguments = [
+            (os.urandom(password_length), os.urandom(salt_length))
+            for _ in xrange(5)
+        ]
+        for password, salt in arguments:
             start = time.clock()
             pbkdf2(password, salt, round_measure, hash_length, method)
             end = time.clock()
