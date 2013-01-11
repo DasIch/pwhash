@@ -15,7 +15,7 @@ def test_pbkdf2():
     for password, salt, rounds, hash_length, expected_hashes in PBKDF2_TEST_VECTORS:
         for method, expected_hash in expected_hashes.iteritems():
             try:
-                hash = commoncrypto.pbkdf2(
+                hash = commoncrypto._pbkdf2(
                     password, salt, rounds, hash_length, method
                 )
                 assert hash == expected_hash

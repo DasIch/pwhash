@@ -29,7 +29,7 @@ ffi.cdef("""
 openssl = ffi.verify("#include <openssl/evp.h>")
 
 
-def pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
+def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
     if method not in METHODS:
         raise NotImplementedError("%s is not a supported method")
     hash = ffi.new("unsigned char[]", hash_length)
