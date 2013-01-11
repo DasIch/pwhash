@@ -64,3 +64,15 @@ determine_pbkdf2_rounds.__doc__ = """
     of rounds you have been using so far, unless that is to be expected due to
     downgrades.
 """
+
+
+def constant_time_equal(a, b):
+    """
+    Compares two byte strings `a` and `b` for equality in constant time.
+    """
+    if len(a) != len(b):
+        return False
+    result = 0
+    for x, y in zip(a, b):
+        result |= ord(x) ^ ord(y)
+    return result == 0

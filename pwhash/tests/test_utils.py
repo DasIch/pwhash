@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.utils import determine_pbkdf2_rounds
+from pwhash.utils import determine_pbkdf2_rounds, constant_time_equal
 
 import pytest
 
@@ -19,3 +19,11 @@ def test_determine_pbkdf2_rounds():
         ]:
         with pytest.raises(TypeError):
             determine_pbkdf2_rounds(*arguments)
+
+
+def test_constant_time_equal():
+    # We can't sanely check timing so we just test whether comparision works as
+    # expected.
+    assert constant_time_equal(b"foo", b"foo")
+    assert not constant_time_equal(b"foo", b"bar")
+    assert not constant_time_equal(b"bar", b"foo")
