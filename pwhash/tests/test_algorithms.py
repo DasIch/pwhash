@@ -1,12 +1,12 @@
 # coding: utf-8
 """
-    pwhash.tests.test_init
-    ~~~~~~~~~~~~~~~~~~~~~~
+    pwhash.tests.test_algorithms
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash import pbkdf2
+from pwhash.algorithms import pbkdf2
 from pwhash.tests.utils import PBKDF2_TEST_VECTORS
 
 import pytest
