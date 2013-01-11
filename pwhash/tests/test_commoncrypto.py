@@ -4,7 +4,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :copyright: 2013 by Daniel Neuhäuser
-    :license: BSD
+    :license: BSD, see LICENSE.rst for details
 """
 from pwhash import commoncrypto
 

@@ -4,7 +4,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~
 
     :copyright: 2013 by Daniel Neuhäuser
-    :license: BSD
+    :license: BSD, see LICENSE.rst for details
 """
 from pwhash import pbkdf2
 from pwhash.tests.utils import PBKDF2_TEST_VECTORS
