@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.algorithms import pbkdf2
+from pwhash.algorithms import pbkdf2, PBKDF2_METHODS
 from pwhash.tests.utils import PBKDF2_TEST_VECTORS
 
 import pytest
@@ -19,7 +19,7 @@ def test_pbkdf2():
                 hash = pbkdf2(password, salt, rounds, hash_length, method)
                 assert hash == expected_hash
             except NotImplementedError:
-                pass
+                assert method not in PBKDF2_METHODS
 
     with pytest.raises(ValueError):
         pbkdf2(b"password", b"salt", 0, 20)

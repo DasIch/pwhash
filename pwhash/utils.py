@@ -37,7 +37,7 @@ else:
             elapsed = (end - start)
             if elapsed >= 0:
                 return int(math.ceil(duration * round_measure / elapsed))
-        return 10000
+        raise RuntimeError("measurement failed")
 
 determine_pbkdf2_rounds.__doc__ = """
     Determines how many rounds are needed for hashing to take approximately

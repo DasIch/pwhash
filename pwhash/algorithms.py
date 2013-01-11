@@ -9,9 +9,12 @@
 import sys
 
 if sys.platform == "darwin":
-    from pwhash._commoncrypto import _pbkdf2
+    from pwhash._commoncrypto import _pbkdf2, METHODS as PBKDF2_METHODS
 else:
-    from pwhash._openssl import _pbkdf2
+    from pwhash._openssl import _pbkdf2, METHODS as PBKDF2_METHODS
+
+
+PBKDF2_METHODS = frozenset(PBKDF2_METHODS)
 
 
 def pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
