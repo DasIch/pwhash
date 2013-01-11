@@ -26,13 +26,12 @@ def test_pbkdf2():
 
 def test_determine_pbkdf2_rounds():
     for method in _commoncrypto.METHODS:
-        assert _commoncrypto._determine_pbkdf2_rounds(1, 1, 1, method, 1) >= 1
+        assert _commoncrypto.determine_pbkdf2_rounds(1, 1, 1, method, 1) >= 1
 
-    for arguments in [
-        (1.0, 1, 1, method, 1),
-        (1, 1.0, 1, method, 1),
-        (1, 1, 1.0, method, 1),
-        (1, 1, 1, method, 1.0)
-        ]:
-        with pytest.raises(TypeError):
-            _commoncrypto._determine_pbkdf2_rounds(*arguments)
+        for arguments in [
+            (1.0, 1, 1, method, 1),
+            (1, 1.0, 1, method, 1),
+            (1, 1, 1.0, method, 1)
+            ]:
+            with pytest.raises(TypeError):
+                _commoncrypto.determine_pbkdf2_rounds(*arguments)

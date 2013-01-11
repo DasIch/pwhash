@@ -6,6 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import math
 from threading import Lock
 
 from cffi import FFI
@@ -83,16 +84,16 @@ def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
     return b"".join(ffi.buffer(hash)).encode("hex")
 
 
-def _determine_pbkdf2_rounds(password_length, salt_length, hash_length, method,
+def determine_pbkdf2_rounds(password_length, salt_length, hash_length, method,
                              duration):
     for argument, name in [
         (password_length, "password_length"),
         (salt_length, "salt_length"),
-        (hash_length, "hash_length"),
-        (duration, "duration")
+        (hash_length, "hash_length")
         ]:
         if not isinstance(argument, int):
             raise TypeError("%s must be an int, got %r" % argument.__class__)
+    duration = int(math.ceil(duration * 1000))
     with _COMMONCRYPTO_LOCK:
         return common_key_derivation.CCCalibratePBKDF(
             kCCPBKDF2,
