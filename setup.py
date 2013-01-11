@@ -1,8 +1,8 @@
 # coding: utf-8
 from setuptools import setup
 
-import pwhash.openssl
-import pwhash.commoncrypto
+import pwhash._openssl
+import pwhash._commoncrypto
 
 
 setup(
@@ -16,7 +16,7 @@ setup(
     install_requires=["cffi"],
     zip_safe=False,
     ext_modules=[
-        pwhash.openssl.ffi.verifier.get_extension(),
-        pwhash.commoncrypto.ffi.verifier.get_extension()
+        pwhash._openssl.ffi.verifier.get_extension(),
+        pwhash._commoncrypto.ffi.verifier.get_extension()
     ]
 )
