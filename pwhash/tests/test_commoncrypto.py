@@ -3,7 +3,7 @@
     pwhash.tests.test_commoncrypto
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyright: 2012 by Daniel Neuhäuser
+    :copyright: 2013 by Daniel Neuhäuser
     :license: BSD
 """
 from pwhash import commoncrypto

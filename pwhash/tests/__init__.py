@@ -3,6 +3,6 @@
     pwhash.tests
     ~~~~~~~~~~~~
 
-    :copyright: 2012 by Daniel Neuhäuser
+    :copyright: 2013 by Daniel Neuhäuser
     :licence: BSD
 """
