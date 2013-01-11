@@ -1,7 +1,7 @@
 # coding: utf-8
 """
-    pwhash.commoncrypto
-    ~~~~~~~~~~~~~~~~~~~
+    pwhash._commoncrypto
+    ~~~~~~~~~~~~~~~~~~~~
 
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
