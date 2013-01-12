@@ -7,7 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import constant_time_equal
@@ -54,6 +54,9 @@ class Hasher(object):
         return matches, None
 
 
+_PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
+
+
 class PBKDF2Hasher(Hasher):
     name = b"pbkdf2"
 
@@ -67,12 +70,7 @@ class PBKDF2Hasher(Hasher):
         if hash.startswith(self.name):
             hash = hash[len(self.name) + 1:]
         method, rounds, salt, hash = hash.split(b"$")
-        return {
-            "method": method,
-            "rounds": int(rounds),
-            "salt": salt,
-            "hash": hash
-        }
+        return _PBKDF2Hash(method, int(rounds), salt, hash)
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
@@ -85,18 +83,18 @@ class PBKDF2Hasher(Hasher):
         parsed = self.parse(known_hash)
         hash = pbkdf2(
             password,
-            parsed["salt"],
-            parsed["rounds"],
-            hexed_length(parsed["hash"]),
-            parsed["method"]
+            parsed.salt,
+            parsed.rounds,
+            hexed_length(parsed.hash),
+            parsed.method
         )
-        return constant_time_equal(hash, parsed["hash"])
+        return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, known_hash):
         parsed = self.parse(known_hash)
-        if (self.salt_length > hexed_length(parsed["salt"]) or
-            self.rounds > parsed["rounds"] or
-            self.hash_length > hexed_length(parsed["hash"]) or
-            DIGEST_SIZES[self.method] > DIGEST_SIZES[parsed["method"]]
+        if (self.salt_length > hexed_length(parsed.salt) or
+            self.rounds > parsed.rounds or
+            self.hash_length > hexed_length(parsed.hash) or
+            DIGEST_SIZES[self.method] > DIGEST_SIZES[parsed.method]
             ):
             return self.create(password)
