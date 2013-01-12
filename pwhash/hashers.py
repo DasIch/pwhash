@@ -98,3 +98,19 @@ class PBKDF2Hasher(Hasher):
             DIGEST_SIZES[self.method] > DIGEST_SIZES[parsed.method]
             ):
             return self.create(password)
+
+
+class PlainHasher(Hasher):
+    name = b"plain"
+
+    def parse(self, hash):
+        return hash[len(self.name) + 1:] if hash.startswith(self.name) else hash
+
+    def create(self, password):
+        return self.name + b"$" + password
+
+    def verify(self, password, known_password):
+        return constant_time_equal(password, self.parse(known_password))
+
+    def upgrade(self, password, known_password):
+        pass

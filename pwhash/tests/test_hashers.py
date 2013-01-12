@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.hashers import PBKDF2Hasher
+from pwhash.hashers import PBKDF2Hasher, PlainHasher
 
 
 def test_pbkdf2_hasher():
@@ -31,3 +31,15 @@ def test_pbkdf2_hasher():
     assert hasher.verify(b"password", hash)
     assert hasher.upgrade(b"password", hash) is None
     assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
+
+
+def test_plain_hasher():
+    hasher = PlainHasher()
+
+    hash = hasher.create(b"password")
+
+    assert hasher.verify(b"password", hash)
+    assert not hasher.verify(b"other-password", hash)
+
+    assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
+    assert hasher.verify_and_upgrade(b"other-password", hash) == (False, None)
