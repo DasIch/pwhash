@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.hashers import PBKDF2Hasher, PlainHasher
+from pwhash.hashers import PBKDF2Hasher, PlainHasher, Context
 
 
 def test_pbkdf2_hasher():
@@ -43,3 +43,21 @@ def test_plain_hasher():
 
     assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
     assert hasher.verify_and_upgrade(b"other-password", hash) == (False, None)
+
+
+def test_context():
+    plain_hasher = PlainHasher()
+    context = Context([plain_hasher])
+    assert context.preferred_hasher is plain_hasher
+    hash = context.create(b"password")
+    assert context.verify(b"password", hash)
+    assert context.verify_and_upgrade(b"password", hash) == (True, None)
+
+    pbkdf2_hasher = PBKDF2Hasher(1)
+    upgraded = Context([pbkdf2_hasher, plain_hasher])
+    assert upgraded.preferred_hasher is pbkdf2_hasher
+    assert upgraded.verify(b"password", hash)
+    assert upgraded.upgrade(b"password", hash).startswith("pbkdf2")
+    verified, hash = upgraded.verify_and_upgrade(b"password", hash)
+    assert verified
+    assert hash.startswith("pbkdf2")

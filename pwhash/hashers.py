@@ -114,3 +114,32 @@ class PlainHasher(Hasher):
 
     def upgrade(self, password, known_password):
         pass
+
+
+DEFAULT_HASHERS = [PBKDF2Hasher, PlainHasher]
+
+
+class Context(Hasher):
+    def __init__(self, hashers=None):
+        hashers = DEFAULT_HASHERS if hashers is None else hashers
+        self.hashers = {hasher.name: hasher for hasher in hashers}
+
+    @property
+    def preferred_hasher(self):
+        return self.hashers.itervalues().next()
+
+    def create(self, password):
+        return self.preferred_hasher.create(password)
+
+    def parse(self, hash):
+        name, hash = hash.split(b"$", 1)
+        return self.hashers[name], hash
+
+    def verify(self, password, hash):
+        hasher, hash = self.parse(hash)
+        return hasher.verify(password, hash)
+
+    def upgrade(self, password, hash):
+        hasher, hash = self.parse(hash)
+        if hasher.name != self.preferred_hasher.name:
+            return self.preferred_hasher.create(password)
