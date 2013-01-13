@@ -30,16 +30,6 @@ def generate_salt(salt_length):
 
 
 class Hasher(object):
-    name = None
-
-    def _strip_check(self, hash):
-        if not b"$" in hash:
-            raise ValueError("name missing: %r" % hash)
-        name, hash = hash.split(b"$", 1)
-        if name != self.name:
-            raise ValueError("expected %r hash, got %r" % (self.name, name))
-        return hash
-
     def parse(self, hash):
         raise NotImplementedError()
 
@@ -50,7 +40,7 @@ class Hasher(object):
         raise NotImplementedError()
 
 
-class UpgradeableHasher(Hasher):
+class UpgradeableHasherMixin(object):
     def upgrade(self, password, known_hash):
         raise NotImplementedError()
 
@@ -61,10 +51,30 @@ class UpgradeableHasher(Hasher):
         return matches, None
 
 
+class NamedHasherMixin(object):
+    name = None
+
+    def _strip_check(self, hash):
+        if not b"$" in hash:
+            raise ValueError("name missing: %r" % hash)
+        name, hash = hash.split(b"$", 1)
+        if name != self.name:
+            raise ValueError("expected %r hash, got %r" % (self.name, name))
+        return hash
+
+
+class UpgradeableHasher(UpgradeableHasherMixin, Hasher):
+    pass
+
+
+class NamedHasher(NamedHasherMixin, Hasher):
+    pass
+
+
 _PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
 
 
-class PBKDF2Hasher(UpgradeableHasher):
+class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
     name = b"pbkdf2"
 
     def __init__(self, rounds, method="hmac-sha1", salt_length=DEFAULT_SALT_LENGTH):
@@ -108,7 +118,7 @@ class PBKDF2Hasher(UpgradeableHasher):
             return self.create(password)
 
 
-class PlainHasher(Hasher):
+class PlainHasher(NamedHasher):
     name = b"plain"
 
     def parse(self, hash):
@@ -121,7 +131,7 @@ class PlainHasher(Hasher):
         return constant_time_equal(password, self.parse(known_password))
 
 
-class DigestHasher(Hasher):
+class DigestHasher(NamedHasher):
     digest = None
 
     def create(self, password):
@@ -202,5 +212,5 @@ class Context(UpgradeableHasher):
         hasher, hash = self.parse(hash)
         if hasher.name != self.preferred_hasher.name:
             return self.preferred_hasher.create(password)
-        elif isinstance(hasher, UpgradeableHasher):
+        elif isinstance(hasher, UpgradeableHasherMixin):
             return hasher.upgrade(password, hash)
