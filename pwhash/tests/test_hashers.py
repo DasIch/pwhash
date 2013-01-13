@@ -99,7 +99,7 @@ def test_digest_hashers(hasher_cls):
     SaltedSHA384Hasher, SaltedSHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
     HMACSHA256, HMACSHA384, HMACSHA512
 ])
-def test_salting_hasher(hasher_cls):
+def test_salting_hashers(hasher_cls):
     hasher = hasher_cls(salt_length=1)
     hash = hasher.create(b"password")
     assert hasher.verify(b"password", hash)
