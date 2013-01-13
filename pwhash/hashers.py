@@ -40,6 +40,8 @@ class Hasher(object):
     def verify(self, password, known_hash):
         raise NotImplementedError()
 
+
+class UpgradeableHasher(Hasher):
     def upgrade(self, password, known_hash):
         raise NotImplementedError()
 
@@ -53,7 +55,7 @@ class Hasher(object):
 _PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
 
 
-class PBKDF2Hasher(Hasher):
+class PBKDF2Hasher(UpgradeableHasher):
     name = b"pbkdf2"
 
     def __init__(self, rounds, method="hmac-sha1", salt_length=DEFAULT_SALT_LENGTH):
@@ -110,14 +112,11 @@ class PlainHasher(Hasher):
     def verify(self, password, known_password):
         return constant_time_equal(password, self.parse(known_password))
 
-    def upgrade(self, password, known_password):
-        pass
-
 
 DEFAULT_HASHERS = [PBKDF2Hasher, PlainHasher]
 
 
-class Context(Hasher):
+class Context(UpgradeableHasher):
     def __init__(self, hashers=None):
         hashers = DEFAULT_HASHERS if hashers is None else hashers
         self.hashers = {hasher.name: hasher for hasher in hashers}
@@ -141,3 +140,5 @@ class Context(Hasher):
         hasher, hash = self.parse(hash)
         if hasher.name != self.preferred_hasher.name:
             return self.preferred_hasher.create(password)
+        elif isinstance(hasher, UpgradeableHasher):
+            return hasher.upgrade(password, hash)

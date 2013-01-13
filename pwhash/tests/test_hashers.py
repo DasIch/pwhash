@@ -41,9 +41,6 @@ def test_plain_hasher():
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
 
-    assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
-    assert hasher.verify_and_upgrade(b"other-password", hash) == (False, None)
-
 
 def test_context():
     plain_hasher = PlainHasher()
@@ -61,3 +58,10 @@ def test_context():
     verified, hash = upgraded.verify_and_upgrade(b"password", hash)
     assert verified
     assert hash.startswith("pbkdf2")
+
+    upgraded2 = Context([PBKDF2Hasher(2), plain_hasher])
+    assert upgraded2.verify(b"password", hash)
+    assert upgraded2.upgrade(b"password", hash) is not None
+    verified, hash = upgraded2.verify_and_upgrade(b"password", hash)
+    assert verified
+    assert hash is not None
