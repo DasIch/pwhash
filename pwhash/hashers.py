@@ -188,8 +188,7 @@ DEFAULT_HASHERS = [
 
 
 class Context(UpgradeableHasher):
-    def __init__(self, hashers=None):
-        hashers = DEFAULT_HASHERS if hashers is None else hashers
+    def __init__(self, hashers):
         self.hashers = {hasher.name: hasher for hasher in hashers}
 
     @property
