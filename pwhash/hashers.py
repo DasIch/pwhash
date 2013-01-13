@@ -25,11 +25,7 @@ DEFAULT_SALT_LENGTH = 16 # 128 bit
 
 
 def generate_salt(salt_length):
-    return os.urandom(salt_length).encode("hex")
-
-
-def hexed_length(hexed):
-    return len(hexed.decode("hex"))
+    return os.urandom(salt_length)
 
 
 class Hasher(object):
@@ -70,31 +66,33 @@ class PBKDF2Hasher(Hasher):
         if hash.startswith(self.name):
             hash = hash[len(self.name) + 1:]
         method, rounds, salt, hash = hash.split(b"$")
-        return _PBKDF2Hash(method, int(rounds), salt, hash)
+        return _PBKDF2Hash(method, int(rounds), salt.decode("hex"), hash)
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
         hash = pbkdf2(password, salt, self.rounds, self.hash_length, self.method)
+        hexed = salt.encode("hex")
         return b"$".join(
-            [self.name, self.method, bytes(self.rounds), salt, hash]
+            [self.name, self.method, bytes(self.rounds), salt.encode("hex"), hash]
         )
 
     def verify(self, password, known_hash):
         parsed = self.parse(known_hash)
+        hexed = parsed.salt.encode("hex")
         hash = pbkdf2(
             password,
             parsed.salt,
             parsed.rounds,
-            hexed_length(parsed.hash),
+            len(parsed.hash.decode("hex")),
             parsed.method
         )
         return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, known_hash):
         parsed = self.parse(known_hash)
-        if (self.salt_length > hexed_length(parsed.salt) or
+        if (self.salt_length > len(parsed.salt) or
             self.rounds > parsed.rounds or
-            self.hash_length > hexed_length(parsed.hash) or
+            self.hash_length > len(parsed.hash) or
             DIGEST_SIZES[self.method] > DIGEST_SIZES[parsed.method]
             ):
             return self.create(password)
