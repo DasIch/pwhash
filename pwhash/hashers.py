@@ -63,6 +63,14 @@ class NamedHasherMixin(object):
         return hash
 
 
+class ParameterlessHasherMixin(object):
+    def verify(self, password, hash):
+        return constant_time_equal(
+            self.parse(self.create(password)),
+            self.parse(hash)
+        )
+
+
 class UpgradeableHasher(UpgradeableHasherMixin, Hasher):
     pass
 
@@ -118,7 +126,7 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
             return self.create(password)
 
 
-class PlainHasher(NamedHasher):
+class PlainHasher(ParameterlessHasherMixin, NamedHasher):
     name = b"plain"
 
     def parse(self, hash):
@@ -127,11 +135,8 @@ class PlainHasher(NamedHasher):
     def create(self, password):
         return self.name + b"$" + password
 
-    def verify(self, password, known_password):
-        return constant_time_equal(password, self.parse(known_password))
 
-
-class DigestHasher(NamedHasher):
+class DigestHasher(ParameterlessHasherMixin, NamedHasher):
     digest = None
 
     def create(self, password):
@@ -142,12 +147,6 @@ class DigestHasher(NamedHasher):
 
     def parse(self, hash):
         return self._strip_check(hash)
-
-    def verify(self, password, known_hash):
-        return constant_time_equal(
-            self.digest(password).hexdigest(),
-            self.parse(known_hash)
-        )
 
 
 class MD5Hasher(DigestHasher):
