@@ -174,6 +174,70 @@ class SHA512Hasher(DigestHasher):
     digest = hashlib.sha512
 
 
+_SaltedDigestHash = namedtuple("_SaltedDigestHash", ["salt", "hash"])
+
+
+class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
+    digest = None
+
+    def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
+        self.salt_length = salt_length
+
+    def create(self, password):
+        salt = generate_salt(self.salt_length)
+        hash = self.digest(salt + password).hexdigest()
+        return b"$".join([
+            self.name,
+            salt.encode("hex"),
+            hash
+        ])
+
+    def parse(self, hash):
+        hash = NamedHasher.parse(self, hash)
+        salt, hash = hash.split("$", 2)
+        return _SaltedDigestHash(salt.decode("hex"), hash)
+
+    def verify(self, password, known_hash):
+        parsed = self.parse(known_hash)
+        hash = self.digest(parsed.salt + password).hexdigest()
+        return constant_time_equal(hash, parsed.hash)
+
+    def upgrade(self, password, known_hash):
+        parsed = self.parse(known_hash)
+        if self.salt_length > len(parsed.salt):
+            return self.create(password)
+
+
+class SaltedMD5Hasher(SaltedDigestHasher):
+    name = "salted-md5"
+    digest = hashlib.md5
+
+
+class SaltedSHA1Hasher(SaltedDigestHasher):
+    name = "salted-sha1"
+    digest = hashlib.sha1
+
+
+class SaltedSHA224Hasher(SaltedDigestHasher):
+    name = "salted-sha224"
+    digest = hashlib.sha224
+
+
+class SaltedSHA256Hasher(SaltedDigestHasher):
+    name = "salted-sha256"
+    digest = hashlib.sha256
+
+
+class SaltedSHA384Hasher(SaltedDigestHasher):
+    name = "salted-sha384"
+    digest = hashlib.sha384
+
+
+class SaltedSHA512Hasher(SaltedDigestHasher):
+    name = "salted-sha512"
+    digest = hashlib.sha512
+
+
 _HMACHash = namedtuple("_HMACHash", ["salt", "hash"])
 
 
@@ -241,6 +305,9 @@ DEFAULT_HASHERS = [
     PBKDF2Hasher,
     HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
     HMACMD5,
+    SaltedSHA512Hasher, SaltedSHA384Hasher, SaltedSHA256Hasher,
+    SaltedSHA224Hasher, SaltedSHA1Hasher,
+    SaltedMD5Hasher,
     SHA512Hasher, SHA384Hasher, SHA256Hasher, SHA224Hasher, SHA1Hasher,
     MD5Hasher,
     PlainHasher

@@ -9,7 +9,9 @@
 from pwhash.hashers import (
     PBKDF2Hasher, PlainHasher, Context, MD5Hasher, SHA1Hasher, SHA224Hasher,
     SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
-    HMACSHA256, HMACSHA384, HMACSHA512
+    HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher, SaltedSHA1Hasher,
+    SaltedSHA224Hasher, SaltedSHA256Hasher, SaltedSHA384Hasher,
+    SaltedSHA512Hasher
 )
 
 import pytest
@@ -80,8 +82,8 @@ def test_context():
 
 
 @pytest.mark.parametrize("hasher_cls", [
-    MD5Hasher,
-    SHA1Hasher, SHA224Hasher, SHA256Hasher, SHA384Hasher, SHA512Hasher
+    MD5Hasher, SHA1Hasher, SHA224Hasher, SHA256Hasher, SHA384Hasher,
+    SHA512Hasher
 ])
 def test_digest_hashers(hasher_cls):
     hasher = hasher_cls()
@@ -93,10 +95,11 @@ def test_digest_hashers(hasher_cls):
 
 
 @pytest.mark.parametrize("hasher_cls", [
-    HMACMD5,
-    HMACSHA1, HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512
+    SaltedMD5Hasher, SaltedSHA1Hasher, SaltedSHA224Hasher, SaltedSHA256Hasher,
+    SaltedSHA384Hasher, SaltedSHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
+    HMACSHA256, HMACSHA384, HMACSHA512
 ])
-def test_hmac_hashers(hasher_cls):
+def test_salting_hasher(hasher_cls):
     hasher = hasher_cls(salt_length=1)
     hash = hasher.create(b"password")
     assert hasher.verify(b"password", hash)
