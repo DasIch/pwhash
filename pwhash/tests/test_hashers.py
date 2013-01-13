@@ -6,7 +6,12 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.hashers import PBKDF2Hasher, PlainHasher, Context
+from pwhash.hashers import (
+    PBKDF2Hasher, PlainHasher, Context, MD5Hasher, SHA1Hasher, SHA224Hasher,
+    SHA256Hasher, SHA384Hasher, SHA512Hasher
+)
+
+import pytest
 
 
 def test_pbkdf2_hasher():
@@ -65,3 +70,14 @@ def test_context():
     verified, hash = upgraded2.verify_and_upgrade(b"password", hash)
     assert verified
     assert hash is not None
+
+
+@pytest.mark.parametrize("hasher_cls", [
+    MD5Hasher,
+    SHA1Hasher, SHA224Hasher, SHA256Hasher, SHA384Hasher, SHA512Hasher
+])
+def test_digest_hashers(hasher_cls):
+    hasher = hasher_cls()
+    hash = hasher.create(b"password")
+    assert hasher.verify(b"password", hash)
+    assert not hasher.verify(b"other-password", hash)

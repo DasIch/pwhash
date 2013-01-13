@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
+import hashlib
 from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
@@ -113,7 +114,58 @@ class PlainHasher(Hasher):
         return constant_time_equal(password, self.parse(known_password))
 
 
-DEFAULT_HASHERS = [PBKDF2Hasher, PlainHasher]
+class DigestHasher(Hasher):
+    digest = None
+
+    def create(self, password):
+        return b"$".join([
+            self.name,
+            self.digest(password).hexdigest()
+        ])
+
+    def parse(self, hash):
+        return hash[len(self.name) + 1:] if hash.startswith(self.name) else name
+
+    def verify(self, password, known_hash):
+        return constant_time_equal(self.create(password), known_hash)
+
+
+class MD5Hasher(DigestHasher):
+    name = b"md5"
+    digest = hashlib.md5
+
+
+class SHA1Hasher(DigestHasher):
+    name = b"sha1"
+    digest = hashlib.sha1
+
+
+class SHA224Hasher(DigestHasher):
+    name = b"sha224"
+    digest = hashlib.sha224
+
+
+class SHA256Hasher(DigestHasher):
+    name = b"sha256"
+    digest = hashlib.sha256
+
+
+class SHA384Hasher(DigestHasher):
+    name = b"sha384"
+    digest = hashlib.sha384
+
+
+class SHA512Hasher(DigestHasher):
+    name = b"sha512"
+    digest = hashlib.sha512
+
+
+DEFAULT_HASHERS = [
+    PBKDF2Hasher,
+    SHA512Hasher, SHA384Hasher, SHA256Hasher, SHA224Hasher, SHA1Hasher,
+    MD5Hasher,
+    PlainHasher
+]
 
 
 class Context(UpgradeableHasher):
