@@ -320,7 +320,7 @@ DEFAULT_HASHERS = [
 
 class Context(UpgradeableHasher):
     def __init__(self, hashers):
-        self.hashers = {hasher.name: hasher for hasher in hashers}
+        self.hashers = OrderedDict((hasher.name, hasher) for hasher in hashers)
 
     @property
     def preferred_hasher(self):
