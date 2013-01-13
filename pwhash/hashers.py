@@ -32,6 +32,14 @@ def generate_salt(salt_length):
 class Hasher(object):
     name = None
 
+    def _strip_check(self, hash):
+        if not b"$" in hash:
+            raise ValueError("name missing: %r" % hash)
+        name, hash = hash.split(b"$", 1)
+        if name != self.name:
+            raise ValueError("expected %r hash, got %r" % (self.name, name))
+        return hash
+
     def parse(self, hash):
         raise NotImplementedError()
 
@@ -66,8 +74,7 @@ class PBKDF2Hasher(UpgradeableHasher):
         self.hash_length = DIGEST_SIZES[method]
 
     def parse(self, hash):
-        if hash.startswith(self.name):
-            hash = hash[len(self.name) + 1:]
+        hash = self._strip_check(hash)
         method, rounds, salt, hash = hash.split(b"$")
         return _PBKDF2Hash(method, int(rounds), salt.decode("hex"), hash)
 
@@ -105,7 +112,7 @@ class PlainHasher(Hasher):
     name = b"plain"
 
     def parse(self, hash):
-        return hash[len(self.name) + 1:] if hash.startswith(self.name) else hash
+        return self._strip_check(hash)
 
     def create(self, password):
         return self.name + b"$" + password
@@ -124,10 +131,13 @@ class DigestHasher(Hasher):
         ])
 
     def parse(self, hash):
-        return hash[len(self.name) + 1:] if hash.startswith(self.name) else name
+        return self._strip_check(hash)
 
     def verify(self, password, known_hash):
-        return constant_time_equal(self.create(password), known_hash)
+        return constant_time_equal(
+            self.digest(password).hexdigest(),
+            self.parse(known_hash)
+        )
 
 
 class MD5Hasher(DigestHasher):
@@ -181,7 +191,7 @@ class Context(UpgradeableHasher):
         return self.preferred_hasher.create(password)
 
     def parse(self, hash):
-        name, hash = hash.split(b"$", 1)
+        name = hash.split(b"$", 1)[0]
         return self.hashers[name], hash
 
     def verify(self, password, hash):

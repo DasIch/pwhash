@@ -22,6 +22,9 @@ def test_pbkdf2_hasher():
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
 
+    with pytest.raises(ValueError):
+        hasher.verify(b"password", b"something")
+
     upgraded = PBKDF2Hasher(2)
     assert hasher.upgrade(b"password", hash) is None
     assert upgraded.upgrade(b"password", hash) is not None
@@ -45,6 +48,9 @@ def test_plain_hasher():
 
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
+
+    with pytest.raises(ValueError):
+        hasher.verify(b"password", b"something")
 
 
 def test_context():
@@ -81,3 +87,5 @@ def test_digest_hashers(hasher_cls):
     hash = hasher.create(b"password")
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
+    with pytest.raises(ValueError):
+        hasher.verify(b"password", b"something")
