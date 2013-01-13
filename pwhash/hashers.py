@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
+import hmac
 import hashlib
 from collections import OrderedDict, namedtuple
 
@@ -173,8 +174,73 @@ class SHA512Hasher(DigestHasher):
     digest = hashlib.sha512
 
 
+_HMACHash = namedtuple("_HMACHash", ["salt", "hash"])
+
+
+class HMACHasher(UpgradeableHasherMixin, NamedHasher):
+    digest = None
+
+    def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
+        self.salt_length = salt_length
+
+    def create(self, password):
+        salt = generate_salt(self.salt_length)
+        hash = hmac.new(salt, password, self.digest).hexdigest()
+        return b"$".join([
+            self.name,
+            salt.encode("hex"),
+            hash
+        ])
+
+    def parse(self, hash):
+        salt, hash = NamedHasher.parse(self, hash).split("$", 1)
+        return _HMACHash(salt.decode("hex"), hash)
+
+    def verify(self, password, known_hash):
+        parsed = self.parse(known_hash)
+        hash = hmac.new(parsed.salt, password, self.digest).hexdigest()
+        return constant_time_equal(hash, parsed.hash)
+
+    def upgrade(self, password, known_hash):
+        parsed = self.parse(known_hash)
+        if self.salt_length > len(parsed.salt):
+            return self.create(password)
+
+
+class HMACMD5(HMACHasher):
+    name = "hmac-md5"
+    digest = hashlib.md5
+
+
+class HMACSHA1(HMACHasher):
+    name = "hmac-sha1"
+    digest = hashlib.sha1
+
+
+class HMACSHA224(HMACHasher):
+    name = "hmac-sha224"
+    digest = hashlib.sha224
+
+
+class HMACSHA256(HMACHasher):
+    name = "hmac-sha256"
+    digest = hashlib.sha256
+
+
+class HMACSHA384(HMACHasher):
+    name = "hmac-sha384"
+    digest = hashlib.sha384
+
+
+class HMACSHA512(HMACHasher):
+    name = "hmac-sha512"
+    digest = hashlib.sha512
+
+
 DEFAULT_HASHERS = [
     PBKDF2Hasher,
+    HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
+    HMACMD5,
     SHA512Hasher, SHA384Hasher, SHA256Hasher, SHA224Hasher, SHA1Hasher,
     MD5Hasher,
     PlainHasher

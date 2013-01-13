@@ -8,7 +8,8 @@
 """
 from pwhash.hashers import (
     PBKDF2Hasher, PlainHasher, Context, MD5Hasher, SHA1Hasher, SHA224Hasher,
-    SHA256Hasher, SHA384Hasher, SHA512Hasher
+    SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
+    HMACSHA256, HMACSHA384, HMACSHA512
 )
 
 import pytest
@@ -89,3 +90,27 @@ def test_digest_hashers(hasher_cls):
     assert not hasher.verify(b"other-password", hash)
     with pytest.raises(ValueError):
         hasher.verify(b"password", b"something")
+
+
+@pytest.mark.parametrize("hasher_cls", [
+    HMACMD5,
+    HMACSHA1, HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512
+])
+def test_hmac_hashers(hasher_cls):
+    hasher = hasher_cls(salt_length=1)
+    hash = hasher.create(b"password")
+    assert hasher.verify(b"password", hash)
+    assert not hasher.verify(b"other-password", hash)
+    with pytest.raises(ValueError):
+        hasher.verify(b"password", b"something")
+    assert hasher.upgrade(b"password", hash) is None
+    verified, new_hash = hasher.verify_and_upgrade(b"password", hash)
+    assert verified
+    assert new_hash is None
+
+    upgraded = hasher_cls(salt_length=2)
+    assert upgraded.verify(b"password", hash)
+    assert upgraded.upgrade(b"password", hash) is not None
+    verified, new_hash = upgraded.verify_and_upgrade(b"password", hash)
+    assert verified
+    assert new_hash is not None
