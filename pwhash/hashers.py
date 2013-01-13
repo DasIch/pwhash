@@ -54,7 +54,7 @@ class UpgradeableHasherMixin(object):
 class NamedHasherMixin(object):
     name = None
 
-    def _strip_check(self, hash):
+    def parse(self, hash):
         if not b"$" in hash:
             raise ValueError("name missing: %r" % hash)
         name, hash = hash.split(b"$", 1)
@@ -92,7 +92,7 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
         self.hash_length = DIGEST_SIZES[method]
 
     def parse(self, hash):
-        hash = self._strip_check(hash)
+        hash = NamedHasher.parse(self, hash)
         method, rounds, salt, hash = hash.split(b"$")
         return _PBKDF2Hash(method, int(rounds), salt.decode("hex"), hash)
 
@@ -129,9 +129,6 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
 class PlainHasher(ParameterlessHasherMixin, NamedHasher):
     name = b"plain"
 
-    def parse(self, hash):
-        return self._strip_check(hash)
-
     def create(self, password):
         return self.name + b"$" + password
 
@@ -144,9 +141,6 @@ class DigestHasher(ParameterlessHasherMixin, NamedHasher):
             self.name,
             self.digest(password).hexdigest()
         ])
-
-    def parse(self, hash):
-        return self._strip_check(hash)
 
 
 class MD5Hasher(DigestHasher):
