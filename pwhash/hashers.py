@@ -303,13 +303,17 @@ class HMACSHA512(HMACHasher):
 
 DEFAULT_HASHERS = [
     PBKDF2Hasher,
+    # hmac
     HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
     HMACMD5,
+    # salted digest
     SaltedSHA512Hasher, SaltedSHA384Hasher, SaltedSHA256Hasher,
     SaltedSHA224Hasher, SaltedSHA1Hasher,
     SaltedMD5Hasher,
+    # digest
     SHA512Hasher, SHA384Hasher, SHA256Hasher, SHA224Hasher, SHA1Hasher,
     MD5Hasher,
+    # plain
     PlainHasher
 ]
 
