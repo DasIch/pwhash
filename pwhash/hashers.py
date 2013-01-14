@@ -23,7 +23,16 @@ DIGEST_SIZES = {
     "hmac-sha512": 64
 }
 
-DEFAULT_SALT_LENGTH = 16 # 128 bit
+#: The recommended minimum salt length as specified in the `NIST Special
+#: Publication 800-132`_, published in December of 2010.
+#:
+#: .. _NIST Special Publication 800-132: http://csrc.nist.gov/publications/nistpubs/800-132/nist-sp800-132.pdf
+RECOMMENDED_MIN_SALT_LENGTH = 16 # 128 bit
+
+#: The default salt length we are using. Due to the fact that the latest NIST
+#: recommendation is more than 3 years old, we use twice the (minimum)
+#: recommended length.
+DEFAULT_SALT_LENGTH = RECOMMENDED_MIN_SALT_LENGTH * 2
 
 
 def generate_salt(salt_length):
