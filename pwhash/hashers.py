@@ -37,8 +37,11 @@ class Hasher(object):
     def create(self, password):
         raise NotImplementedError()
 
-    def verify(self, password, known_hash):
-        raise NotImplementedError()
+    def verify(self, password, hash):
+        return constant_time_equal(
+            self.parse(self.create(password)),
+            self.parse(hash)
+        )
 
 
 class UpgradeableHasherMixin(object):
@@ -62,14 +65,6 @@ class NamedHasherMixin(object):
         if name != self.name:
             raise ValueError("expected %r hash, got %r" % (self.name, name))
         return hash
-
-
-class ParameterlessHasherMixin(object):
-    def verify(self, password, hash):
-        return constant_time_equal(
-            self.parse(self.create(password)),
-            self.parse(hash)
-        )
 
 
 class UpgradeableHasher(UpgradeableHasherMixin, Hasher):
@@ -127,14 +122,14 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
             return self.create(password)
 
 
-class PlainHasher(ParameterlessHasherMixin, NamedHasher):
+class PlainHasher(NamedHasher):
     name = b"plain"
 
     def create(self, password):
         return self.name + b"$" + password
 
 
-class DigestHasher(ParameterlessHasherMixin, NamedHasher):
+class DigestHasher(NamedHasher):
     digest = None
 
     def create(self, password):
