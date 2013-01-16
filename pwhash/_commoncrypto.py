@@ -81,7 +81,7 @@ def _pbkdf2(password, salt, rounds, hash_length, method="hmac-sha1"):
         )
     if result != 0:
         raise RuntimeError("something went wrong")
-    return b"".join(ffi.buffer(hash)).encode("hex")
+    return b"".join(ffi.buffer(hash))
 
 
 def determine_pbkdf2_rounds(password_length, salt_length, hash_length, method,

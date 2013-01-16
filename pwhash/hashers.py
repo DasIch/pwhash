@@ -99,24 +99,26 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
     def parse(self, hash):
         hash = NamedHasher.parse(self, hash)
         method, rounds, salt, hash = hash.split(b"$")
-        return _PBKDF2Hash(method, int(rounds), salt.decode("hex"), hash)
+        return _PBKDF2Hash(
+            method, int(rounds), salt.decode("hex"), hash.decode("hex")
+        )
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = pbkdf2(password, salt, self.rounds, self.hash_length, self.method)
-        hexed = salt.encode("hex")
+        hash = pbkdf2(
+            password, salt, self.rounds, self.hash_length, self.method
+        ).encode("hex")
         return b"$".join(
             [self.name, self.method, bytes(self.rounds), salt.encode("hex"), hash]
         )
 
     def verify(self, password, known_hash):
         parsed = self.parse(known_hash)
-        hexed = parsed.salt.encode("hex")
         hash = pbkdf2(
             password,
             parsed.salt,
             parsed.rounds,
-            len(parsed.hash.decode("hex")),
+            len(parsed.hash),
             parsed.method
         )
         return constant_time_equal(hash, parsed.hash)
