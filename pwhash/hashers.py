@@ -307,7 +307,7 @@ class HMACSHA512(HMACHasher):
     digest = hashlib.sha512
 
 
-DEFAULT_HASHERS = [
+ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
     PBKDF2Hasher,
     # hmac
     HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
@@ -321,10 +321,17 @@ DEFAULT_HASHERS = [
     MD5Hasher,
     # plain
     PlainHasher
-]
+])
 
 
 class Context(UpgradeableHasher):
+    @classmethod
+    def from_config(cls, config):
+        return cls([
+            hasher(**config.get(name, {}))
+            for name, hasher in ALL_HASHERS.iteritems()
+        ])
+
     def __init__(self, hashers):
         self.hashers = OrderedDict((hasher.name, hasher) for hasher in hashers)
 

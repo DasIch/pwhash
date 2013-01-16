@@ -11,7 +11,7 @@ from pwhash.hashers import (
     SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
     HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher, SaltedSHA1Hasher,
     SaltedSHA224Hasher, SaltedSHA256Hasher, SaltedSHA384Hasher,
-    SaltedSHA512Hasher
+    SaltedSHA512Hasher, ALL_HASHERS
 )
 
 import pytest
@@ -79,6 +79,20 @@ def test_context():
     verified, hash = upgraded2.verify_and_upgrade(b"password", hash)
     assert verified
     assert hash is not None
+
+    config = {
+        "pbkdf2": {
+            "rounds": 1,
+            "method": "hmac-sha1",
+            "salt_length": 16
+        }
+    }
+    for name, hasher, in ALL_HASHERS.iteritems():
+        if name.startswith("hmac") or name.startswith("salted"):
+            config[name] = {"salt_length": 16}
+    context = Context.from_config(config)
+    hash = context.create(b"password")
+    assert context.verify(b"password", hash)
 
 
 @pytest.mark.parametrize("hasher_cls", [
