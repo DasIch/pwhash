@@ -1,8 +1,14 @@
 # coding: utf-8
+import sys
 from setuptools import setup
 
 import pwhash._openssl
-import pwhash._commoncrypto
+
+ext_modules = [pwhash._openssl.ffi.verifier.get_extension()]
+
+if sys.platform == "darwin":
+    import pwhash._commoncrypto
+    ext_modules.append(pwhash._commoncrypto.ffi.verifier.get_extension())
 
 
 setup(
@@ -16,8 +22,5 @@ setup(
     packages=["pwhash", "pwhash.tests"],
     install_requires=["cffi"],
     zip_safe=False,
-    ext_modules=[
-        pwhash._openssl.ffi.verifier.get_extension(),
-        pwhash._commoncrypto.ffi.verifier.get_extension()
-    ]
+    ext_modules=ext_modules
 )
