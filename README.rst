@@ -1,6 +1,9 @@
 pwhash
 ======
 
+.. image:: https://travis-ci.org/DasIch/pwhash.png?branch=master
+   :target: https://travis-ci.org/DasIch/pwhash
+
 pwhash is a library in an early stage of development, aiming to provide secure
 and easy to use password hashing, relying on OpenSSL_ and CommonCrypto_
 implementations of password hashing algorithms. Eventually users should be able
