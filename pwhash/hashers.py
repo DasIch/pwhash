@@ -328,11 +328,13 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
 
 
 class Context(UpgradeableHasher):
+    default_hasher_classes = ALL_HASHERS
+
     @classmethod
     def from_config(cls, config):
         return cls([
             hasher(**config.get(name, {}))
-            for name, hasher in ALL_HASHERS.items()
+            for name, hasher in cls.default_hasher_classes.items()
         ])
 
     def __init__(self, hashers):
