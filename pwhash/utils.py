@@ -30,7 +30,7 @@ else:
         round_measure = 10000
         arguments = [
             (os.urandom(password_length), os.urandom(salt_length))
-            for _ in xrange(5)
+            for _ in range(5)
         ]
         for password, salt in arguments:
             start = time.clock()
