@@ -15,12 +15,12 @@ import pytest
 def test_pbkdf2():
     for password, salt, rounds, hash_length, expected_hashes in PBKDF2_TEST_VECTORS:
         for method, expected_hash in expected_hashes.iteritems():
-            if method == "hmac-sha256":
-                pytest.xfail("openssl issue?")
             try:
                 hash = _openssl._pbkdf2(
                     password, salt, rounds, hash_length, method
                 ).encode("hex")
+                if method == "hmac-sha256":
+                    pytest.xfail("openssl issue?")
                 assert hash == expected_hash
             except NotImplementedError:
                 assert method not in _openssl.METHODS
