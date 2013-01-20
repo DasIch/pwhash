@@ -74,5 +74,8 @@ def constant_time_equal(a, b):
         return False
     result = 0
     for x, y in zip(a, b):
-        result |= ord(x) ^ ord(y)
+        if sys.version_info[0] >= 3:
+            result |= x ^ y
+        else:
+            result |= ord(x) ^ ord(y)
     return result == 0

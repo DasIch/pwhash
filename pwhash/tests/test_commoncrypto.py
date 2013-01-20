@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import sys
+from binascii import hexlify
 
 import pytest
 
@@ -19,11 +20,11 @@ from pwhash.tests.utils import PBKDF2_TEST_VECTORS
 
 def test_pbkdf2():
     for password, salt, rounds, hash_length, expected_hashes in PBKDF2_TEST_VECTORS:
-        for method, expected_hash in expected_hashes.iteritems():
+        for method, expected_hash in expected_hashes.items():
             try:
-                hash = _commoncrypto._pbkdf2(
+                hash = hexlify(_commoncrypto._pbkdf2(
                     password, salt, rounds, hash_length, method
-                ).encode("hex")
+                ))
                 assert hash == expected_hash
             except NotImplementedError:
                 assert method not in _commoncrypto.METHODS

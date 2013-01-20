@@ -68,10 +68,10 @@ def test_context():
     upgraded = Context([pbkdf2_hasher, plain_hasher])
     assert upgraded.preferred_hasher is pbkdf2_hasher
     assert upgraded.verify(b"password", hash)
-    assert upgraded.upgrade(b"password", hash).startswith("pbkdf2")
+    assert upgraded.upgrade(b"password", hash).startswith(b"pbkdf2")
     verified, hash = upgraded.verify_and_upgrade(b"password", hash)
     assert verified
-    assert hash.startswith("pbkdf2")
+    assert hash.startswith(b"pbkdf2")
 
     upgraded2 = Context([PBKDF2Hasher(2), plain_hasher])
     assert upgraded2.verify(b"password", hash)
@@ -81,14 +81,14 @@ def test_context():
     assert hash is not None
 
     config = {
-        "pbkdf2": {
+        b"pbkdf2": {
             "rounds": 1,
             "method": "hmac-sha1",
             "salt_length": 16
         }
     }
-    for name, hasher, in ALL_HASHERS.iteritems():
-        if name.startswith("hmac") or name.startswith("salted"):
+    for name, hasher, in ALL_HASHERS.items():
+        if name.startswith(b"hmac") or name.startswith(b"salted"):
             config[name] = {"salt_length": 16}
     context = Context.from_config(config)
     hash = context.create(b"password")

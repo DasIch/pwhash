@@ -9,6 +9,7 @@
 import os
 import hmac
 import hashlib
+from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
@@ -100,17 +101,19 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
         hash = NamedHasher.parse(self, hash)
         method, rounds, salt, hash = hash.split(b"$")
         return _PBKDF2Hash(
-            method, int(rounds), salt.decode("hex"), hash.decode("hex")
+            method.decode("ascii"), int(rounds), unhexlify(salt),
+            unhexlify(hash)
         )
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = pbkdf2(
+        hash = hexlify(pbkdf2(
             password, salt, self.rounds, self.hash_length, self.method
-        ).encode("hex")
-        return b"$".join(
-            [self.name, self.method, bytes(self.rounds), salt.encode("hex"), hash]
-        )
+        ))
+        return b"$".join([
+            self.name, self.method.encode("ascii"),
+            str(self.rounds).encode("ascii"), hexlify(salt), hash
+        ])
 
     def verify(self, password, known_hash):
         parsed = self.parse(known_hash)
@@ -146,7 +149,7 @@ class DigestHasher(NamedHasher):
     def create(self, password):
         return b"$".join([
             self.name,
-            self.digest(password).hexdigest()
+            hexlify(self.digest(password).digest())
         ])
 
 
@@ -191,21 +194,21 @@ class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = self.digest(salt + password).hexdigest()
+        hash = hexlify(self.digest(salt + password).digest())
         return b"$".join([
             self.name,
-            salt.encode("hex"),
+            hexlify(salt),
             hash
         ])
 
     def parse(self, hash):
         hash = NamedHasher.parse(self, hash)
-        salt, hash = hash.split("$", 2)
-        return _SaltedDigestHash(salt.decode("hex"), hash)
+        salt, hash = hash.split(b"$", 2)
+        return _SaltedDigestHash(unhexlify(salt), hash)
 
     def verify(self, password, known_hash):
         parsed = self.parse(known_hash)
-        hash = self.digest(parsed.salt + password).hexdigest()
+        hash = hexlify(self.digest(parsed.salt + password).digest())
         return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, known_hash):
@@ -215,32 +218,32 @@ class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
 
 
 class SaltedMD5Hasher(SaltedDigestHasher):
-    name = "salted-md5"
+    name = b"salted-md5"
     digest = hashlib.md5
 
 
 class SaltedSHA1Hasher(SaltedDigestHasher):
-    name = "salted-sha1"
+    name = b"salted-sha1"
     digest = hashlib.sha1
 
 
 class SaltedSHA224Hasher(SaltedDigestHasher):
-    name = "salted-sha224"
+    name = b"salted-sha224"
     digest = hashlib.sha224
 
 
 class SaltedSHA256Hasher(SaltedDigestHasher):
-    name = "salted-sha256"
+    name = b"salted-sha256"
     digest = hashlib.sha256
 
 
 class SaltedSHA384Hasher(SaltedDigestHasher):
-    name = "salted-sha384"
+    name = b"salted-sha384"
     digest = hashlib.sha384
 
 
 class SaltedSHA512Hasher(SaltedDigestHasher):
-    name = "salted-sha512"
+    name = b"salted-sha512"
     digest = hashlib.sha512
 
 
@@ -255,20 +258,20 @@ class HMACHasher(UpgradeableHasherMixin, NamedHasher):
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = hmac.new(salt, password, self.digest).hexdigest()
+        hash = hexlify(hmac.new(salt, password, self.digest).digest())
         return b"$".join([
             self.name,
-            salt.encode("hex"),
+            hexlify(salt),
             hash
         ])
 
     def parse(self, hash):
-        salt, hash = NamedHasher.parse(self, hash).split("$", 1)
-        return _HMACHash(salt.decode("hex"), hash)
+        salt, hash = NamedHasher.parse(self, hash).split(b"$", 1)
+        return _HMACHash(unhexlify(salt), hash)
 
     def verify(self, password, known_hash):
         parsed = self.parse(known_hash)
-        hash = hmac.new(parsed.salt, password, self.digest).hexdigest()
+        hash = hexlify(hmac.new(parsed.salt, password, self.digest).digest())
         return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, known_hash):
@@ -278,32 +281,32 @@ class HMACHasher(UpgradeableHasherMixin, NamedHasher):
 
 
 class HMACMD5(HMACHasher):
-    name = "hmac-md5"
+    name = b"hmac-md5"
     digest = hashlib.md5
 
 
 class HMACSHA1(HMACHasher):
-    name = "hmac-sha1"
+    name = b"hmac-sha1"
     digest = hashlib.sha1
 
 
 class HMACSHA224(HMACHasher):
-    name = "hmac-sha224"
+    name = b"hmac-sha224"
     digest = hashlib.sha224
 
 
 class HMACSHA256(HMACHasher):
-    name = "hmac-sha256"
+    name = b"hmac-sha256"
     digest = hashlib.sha256
 
 
 class HMACSHA384(HMACHasher):
-    name = "hmac-sha384"
+    name = b"hmac-sha384"
     digest = hashlib.sha384
 
 
 class HMACSHA512(HMACHasher):
-    name = "hmac-sha512"
+    name = b"hmac-sha512"
     digest = hashlib.sha512
 
 
@@ -329,7 +332,7 @@ class Context(UpgradeableHasher):
     def from_config(cls, config):
         return cls([
             hasher(**config.get(name, {}))
-            for name, hasher in ALL_HASHERS.iteritems()
+            for name, hasher in ALL_HASHERS.items()
         ])
 
     def __init__(self, hashers):
@@ -337,7 +340,7 @@ class Context(UpgradeableHasher):
 
     @property
     def preferred_hasher(self):
-        return self.hashers.itervalues().next()
+        return next(iter(self.hashers.values()))
 
     def create(self, password):
         return self.preferred_hasher.create(password)
