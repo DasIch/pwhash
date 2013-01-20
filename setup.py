@@ -22,5 +22,10 @@ setup(
     packages=["pwhash", "pwhash.tests"],
     install_requires=["cffi"],
     zip_safe=False,
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
+    classifiers=[
+        "Development Status :: 1 - Pre-Alpha",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 2.7"
+    ]
 )
