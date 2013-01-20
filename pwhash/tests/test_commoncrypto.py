@@ -6,10 +6,15 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash import _commoncrypto
-from pwhash.tests.utils import PBKDF2_TEST_VECTORS
+import sys
 
 import pytest
+
+if sys.platform != "darwin":
+    pytest.skip()
+
+from pwhash import _commoncrypto
+from pwhash.tests.utils import PBKDF2_TEST_VECTORS
 
 
 def test_pbkdf2():
