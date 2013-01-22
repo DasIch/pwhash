@@ -327,7 +327,7 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
 ])
 
 
-class Context(UpgradeableHasher):
+class PasswordHasher(UpgradeableHasher):
     default_hasher_classes = ALL_HASHERS
 
     @classmethod
