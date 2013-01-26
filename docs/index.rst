@@ -14,7 +14,7 @@ on the fly.
    hash = pwhasher.create(b"password")
    verified, new_hash = pwhasher.verify_and_upgrade(b"password", hash)
    if verified:
-       print u"Valid Password"
+       print(u"Valid Password")
        if new_hash is not None:
            save_new_safer_password_hash(hash)
 
