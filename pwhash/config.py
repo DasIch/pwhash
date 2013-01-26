@@ -6,6 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+from __future__ import print_function
 import sys
 import json
 from argparse import ArgumentParser
@@ -42,19 +43,19 @@ def create_config(argv=sys.argv):
     )
     outfilename = parser.parse_args(argv[1:]).outfile
 
-    print u"pwhash config creation"
-    print u"general"
+    print(u"pwhash config creation")
+    print(u"general")
     while True:
         salt_length = get_int(
             u"Which salt length should be used in bytes? [default: %d] " % hashers.DEFAULT_SALT_LENGTH,
             hashers.DEFAULT_SALT_LENGTH
         )
         if salt_length < hashers.RECOMMENDED_MIN_SALT_LENGTH:
-            print u"That's below the NIST recommended minimum salt length of %d bytes" % hashers.RECOMMENDED_MIN_SALT_LENGTH
+            print(u"That's below the NIST recommended minimum salt length of %d bytes" % hashers.RECOMMENDED_MIN_SALT_LENGTH)
             if get_bool(u"Are you sure you want to use that salt length? [n] "):
                 break
-    print
-    print u"pbkdf2"
+    print()
+    print(u"pbkdf2")
     rounds = get_int(u"How many rounds should be used? [default: auto] ", None)
     if rounds is None:
         password_length = get_int(u"What is the minimum password length? ")
@@ -69,7 +70,7 @@ def create_config(argv=sys.argv):
             method,
             duration
         )
-        print u"Using %d rounds" % rounds
+        print(u"Using %d rounds" % rounds)
 
     config = {}
     for name, hasher in hashers.ALL_HASHERS.iteritems():
