@@ -79,3 +79,9 @@ def constant_time_equal(a, b):
         else:
             result |= ord(x) ^ ord(y)
     return result == 0
+
+
+class classproperty(property):
+    def __get__(self, instance, cls):
+        return self.fget(cls)
+    # __set__ and __delete__ can only be implemented with metaclasses if at all

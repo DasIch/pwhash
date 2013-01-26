@@ -9,13 +9,14 @@
 import os
 import hmac
 import json
+import inspect
 import hashlib
 import warnings
 from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
-from pwhash.utils import constant_time_equal
+from pwhash.utils import constant_time_equal, classproperty
 
 
 DIGEST_SIZES = {
@@ -43,6 +44,14 @@ def generate_salt(salt_length):
 
 
 class Hasher(object):
+    @classproperty
+    def requires_config(cls):
+        if cls.__init__ is object.__init__:
+            return False
+        argspec = inspect.getargspec(cls.__init__)
+        arguments = argspec.args[1:-len(argspec.defaults)]
+        return bool(arguments)
+
     def parse(self, hash):
         raise NotImplementedError()
 
@@ -340,15 +349,14 @@ class PasswordHasher(UpgradeableHasher):
     def from_config(cls, config):
         hashers = []
         for name, hasher_cls in cls.default_hasher_classes.items():
-            try:
-                hashers.append(hasher_cls(**config.get(name, {})))
-            except TypeError:
-                # TODO: hasher_cls should probably expose the required
-                # configuration or something, for better handling of this case.
+            hasher_config = config.get(name, {})
+            if hasher_cls.requires_config and not hasher_config:
                 warnings.warn(
                     "configuration for %r is missing" % name,
                     ConfigWarning
                 )
+            else:
+                hashers.append(hasher_cls(**hasher_config))
         return cls(hashers)
 
     @classmethod
