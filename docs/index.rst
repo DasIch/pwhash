@@ -22,3 +22,11 @@ Get to know pwhash
 .. toctree::
 
    getting-started.rst
+
+
+API
+---
+
+.. toctree::
+
+   api/pwhash.rst

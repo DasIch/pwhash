@@ -56,9 +56,15 @@ class Hasher(object):
         raise NotImplementedError()
 
     def create(self, password):
+        """
+        Returns a hash for `password`.
+        """
         raise NotImplementedError()
 
     def verify(self, password, hash):
+        """
+        Returns `True` if `hash` was created using `password`.
+        """
         return constant_time_equal(
             self.parse(self.create(password)),
             self.parse(hash)
@@ -66,10 +72,17 @@ class Hasher(object):
 
 
 class UpgradeableHasherMixin(object):
-    def upgrade(self, password, known_hash):
+    def upgrade(self, password, hash):
+        """
+        Returns a new hash if there is a better method than what was used for
+        `hash`.
+        """
         raise NotImplementedError()
 
     def verify_and_upgrade(self, password, known_hash):
+        """
+        Returns a tuple ``(is_correct_password, new_upgraded_hash)``.
+        """
         matches = self.verify(password, known_hash)
         if matches:
             return matches, self.upgrade(password, known_hash)
@@ -343,10 +356,20 @@ class ConfigWarning(UserWarning):
 
 
 class PasswordHasher(UpgradeableHasher):
+    #: An :class:`~collections.OrderedDict` containing the hashers
+    #: :class:`PasswordHasher` uses in descending order of recommendation.
     default_hasher_classes = ALL_HASHERS
 
     @classmethod
     def from_config(cls, config):
+        """
+        Creates a :class:`PasswordHasher` from `config`.
+
+        `config` is expected to be a dictionary mapping hasher names to
+        dictionaries containing the `__init__` arguments.
+
+        The hashers will be looked up in :attr:`default_hasher_classes`.
+        """
         hashers = []
         for name, hasher_cls in cls.default_hasher_classes.items():
             hasher_config = config.get(name, {})
@@ -361,6 +384,10 @@ class PasswordHasher(UpgradeableHasher):
 
     @classmethod
     def from_config_file(cls, filepath):
+        """
+        Like :meth:`from_config` but loads the config from a json file at
+        `filepath` first.
+        """
         with open(filepath, "rb") as config_file:
             return cls.from_config(json.load(config_file))
 
@@ -369,9 +396,16 @@ class PasswordHasher(UpgradeableHasher):
 
     @property
     def preferred_hasher(self):
+        """
+        The hasher used to create new password hashes.
+        """
         return next(iter(self.hashers.values()))
 
     def create(self, password):
+        """
+        Returns the a hash for the given `password` using
+        :attr:`preferred_hasher`.
+        """
         return self.preferred_hasher.create(password)
 
     def parse(self, hash):
