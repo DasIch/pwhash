@@ -4,9 +4,7 @@ pwhash documentation
 pwhash makes password hashing simple and safe. Instead of staying up at
 night wondering whether your hash function is compromised, pwhash does
 that for you, upgrading your hashes to the latest technology available
-on the fly.
-
- ::
+on the fly.::
 
    from pwhash import PasswordHasher
 
@@ -18,16 +16,9 @@ on the fly.
        if new_hash is not None:
            save_new_safer_password_hash(hash)
 
-.. Contents:
+Get to know pwhash
+------------------
 
-   .. toctree::
-      :maxdepth: 2
+.. toctree::
 
-
-
-   Indices and tables
-   ==================
-
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
+   getting-started.rst
