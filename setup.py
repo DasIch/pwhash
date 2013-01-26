@@ -22,7 +22,7 @@ setup(
     packages=["pwhash", "pwhash.tests"],
     entry_points = {
         "console_scripts": [
-            "pwhash-config = pwhash.config:create_config"
+            "pwhash-config = pwhash.config:config"
         ]
     },
     install_requires=["cffi"],

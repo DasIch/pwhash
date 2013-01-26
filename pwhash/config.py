@@ -9,7 +9,10 @@
 from __future__ import print_function
 import sys
 import json
-from argparse import ArgumentParser
+import textwrap
+import argparse
+
+from docopt import docopt
 
 from pwhash import hashers
 from pwhash.utils import determine_pbkdf2_rounds
@@ -35,16 +38,35 @@ def get_bool(prompt, default=False):
         return default
 
 
-def create_config(argv=sys.argv):
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-o", "--out", metavar="OUTFILE", dest="outfile",
-        default="pwhash.json"
-    )
-    outfilename = parser.parse_args(argv[1:]).outfile
+def config(argv=sys.argv):
+    """
+    usage: pwhash-config <command> [<args>...]
+           pwhash-config (-h | --help)
 
-    print(u"pwhash config creation")
-    print(u"general")
+    commands:
+      create  Create pwhash configuration
+    """
+    arguments = docopt(
+        textwrap.dedent(config.__doc__), argv=argv[1:], options_first=True
+    )
+    command_argv = [arguments["<command>"]] + arguments["<args>"]
+    if arguments["<command>"] == "create":
+        config_create(
+            docopt(textwrap.dedent(config_create.__doc__), argv=command_argv)
+        )
+    else:
+        print(u"%r is not a pwhash-config command" % arguments["<command>"])
+
+
+def config_create(arguments):
+    """
+    usage: pwhash-config create [options]
+
+    options:
+      -o, --out=<file>  Configuration file [default: pwhash.json]
+    """
+    config_file_path = arguments["--out"]
+
     while True:
         salt_length = get_int(
             u"Which salt length should be used in bytes? [default: %d] " % hashers.DEFAULT_SALT_LENGTH,
@@ -54,6 +76,8 @@ def create_config(argv=sys.argv):
             print(u"That's below the NIST recommended minimum salt length of %d bytes" % hashers.RECOMMENDED_MIN_SALT_LENGTH)
             if get_bool(u"Are you sure you want to use that salt length? [n] "):
                 break
+        else:
+            break
     print()
     print(u"pbkdf2")
     rounds = get_int(u"How many rounds should be used? [default: auto] ", None)
@@ -82,5 +106,5 @@ def create_config(argv=sys.argv):
         "salt_length": salt_length
     }
 
-    with open(outfilename, "wb") as outfile:
-        json.dump(config, outfile, indent=4)
+    with open(config_file_path, "wb") as config_file:
+        json.dump(config, config_file, indent=4)
