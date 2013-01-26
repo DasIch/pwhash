@@ -24,6 +24,16 @@ def get_float(prompt):
     return float(raw_input(prompt))
 
 
+def get_bool(prompt, default=False):
+    raw_bool = raw_input(prompt)
+    if raw_bool == "y":
+        return True
+    elif raw_bool == "n":
+        return False
+    else:
+        return default
+
+
 def create_config(argv=sys.argv):
     parser = ArgumentParser()
     parser.add_argument(
@@ -34,10 +44,15 @@ def create_config(argv=sys.argv):
 
     print u"pwhash config creation"
     print u"general"
-    salt_length = get_int(
-        u"Which salt length should be used in bytes? [default: %d] " % hashers.DEFAULT_SALT_LENGTH,
-        hashers.DEFAULT_SALT_LENGTH
-    )
+    while True:
+        salt_length = get_int(
+            u"Which salt length should be used in bytes? [default: %d] " % hashers.DEFAULT_SALT_LENGTH,
+            hashers.DEFAULT_SALT_LENGTH
+        )
+        if salt_length < hashers.RECOMMENDED_MIN_SALT_LENGTH:
+            print u"That's below the NIST recommended minimum salt length of %d bytes" % hashers.RECOMMENDED_MIN_SALT_LENGTH
+            if get_bool(u"Are you sure you want to use that salt length? [n] "):
+                break
     print
     print u"pbkdf2"
     rounds = get_int(u"How many rounds should be used? [default: auto] ", None)
