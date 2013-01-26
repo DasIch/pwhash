@@ -20,6 +20,11 @@ setup(
     description="simple safe password hashing",
     url="https://github.com/DasIch/pwhash",
     packages=["pwhash", "pwhash.tests"],
+    entry_points = {
+        "console_scripts": [
+            "pwhash-config = pwhash.config:create_config"
+        ]
+    },
     install_requires=["cffi"],
     zip_safe=False,
     ext_modules=ext_modules,

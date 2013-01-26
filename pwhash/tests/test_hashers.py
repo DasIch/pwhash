@@ -12,7 +12,7 @@ from pwhash.hashers import (
     SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
     HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher, SaltedSHA1Hasher,
     SaltedSHA224Hasher, SaltedSHA256Hasher, SaltedSHA384Hasher,
-    SaltedSHA512Hasher, ALL_HASHERS
+    SaltedSHA512Hasher, ALL_HASHERS, ConfigWarning
 )
 
 import pytest
@@ -94,6 +94,18 @@ def test_password_hasher():
     pw_hasher = PasswordHasher.from_config(config)
     hash = pw_hasher.create(b"password")
     assert pw_hasher.verify(b"password", hash)
+
+
+def test_password_hasher_warnings(recwarn):
+    pw_hasher = PasswordHasher.from_config({})
+    length = len(recwarn.list)
+    for name in PasswordHasher.default_hasher_classes:
+        if name == b"pbkdf2":
+            warning = recwarn.pop(ConfigWarning)
+            new_length = len(recwarn.list)
+            assert new_length < length
+            length = new_length
+            assert name.decode("ascii") in str(warning.message)
 
 
 @pytest.mark.parametrize("hasher_cls", [

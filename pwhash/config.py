@@ -6,6 +6,10 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import sys
+import json
+from argparse import ArgumentParser
+
 from pwhash import hashers
 from pwhash.utils import determine_pbkdf2_rounds
 
@@ -20,7 +24,14 @@ def get_float(prompt):
     return float(raw_input(prompt))
 
 
-def create_config():
+def create_config(argv=sys.argv):
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-o", "--out", metavar="OUTFILE", dest="outfile",
+        default="pwhash.json"
+    )
+    outfilename = parser.parse_args(argv[1:]).outfile
+
     print u"pwhash config creation"
     print u"general"
     salt_length = get_int(
@@ -54,4 +65,6 @@ def create_config():
         "method": method,
         "salt_length": salt_length
     }
-    return config
+
+    with open(outfilename, "wb") as outfile:
+        json.dump(config, outfile, indent=4)

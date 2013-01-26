@@ -8,7 +8,9 @@
 """
 import os
 import hmac
+import json
 import hashlib
+import warnings
 from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
@@ -327,15 +329,32 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
 ])
 
 
+class ConfigWarning(UserWarning):
+    pass
+
+
 class PasswordHasher(UpgradeableHasher):
     default_hasher_classes = ALL_HASHERS
 
     @classmethod
     def from_config(cls, config):
-        return cls([
-            hasher(**config.get(name, {}))
-            for name, hasher in cls.default_hasher_classes.items()
-        ])
+        hashers = []
+        for name, hasher_cls in cls.default_hasher_classes.items():
+            try:
+                hashers.append(hasher_cls(**config.get(name, {})))
+            except TypeError:
+                # TODO: hasher_cls should probably expose the required
+                # configuration or something, for better handling of this case.
+                warnings.warn(
+                    "configuration for %r is missing" % name,
+                    ConfigWarning
+                )
+        return cls(hashers)
+
+    @classmethod
+    def from_config_file(cls, filepath):
+        with open(filepath, "rb") as config_file:
+            return cls.from_config(json.load(config_file))
 
     def __init__(self, hashers):
         self.hashers = OrderedDict((hasher.name, hasher) for hasher in hashers)
