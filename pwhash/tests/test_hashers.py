@@ -57,7 +57,7 @@ def test_plain_hasher():
         hasher.verify(b"password", b"something")
 
 
-def test_password_hasher():
+def test_password_hasher(recwarn):
     plain_hasher = PlainHasher()
     pw_hasher = PasswordHasher([plain_hasher])
     assert pw_hasher.preferred_hasher is plain_hasher
@@ -95,8 +95,8 @@ def test_password_hasher():
     hash = pw_hasher.create(b"password")
     assert pw_hasher.verify(b"password", hash)
 
+    assert not recwarn.list
 
-def test_password_hasher_warnings(recwarn):
     pw_hasher = PasswordHasher.from_config({})
     length = len(recwarn.list)
     for name in PasswordHasher.default_hasher_classes:
