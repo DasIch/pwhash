@@ -30,3 +30,4 @@ API
 .. toctree::
 
    api/pwhash.rst
+   api/hashers.rst
