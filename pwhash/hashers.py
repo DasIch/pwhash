@@ -138,12 +138,23 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = hexlify(pbkdf2(
-            password, salt, self.rounds, self.hash_length, self.method
-        ))
+        return self.format({
+            "name": self.name,
+            "method": self.method,
+            "rounds": self.rounds,
+            "salt": salt,
+            "hash": pbkdf2(
+                password, salt, self.rounds, self.hash_length, self.method
+            )
+        })
+
+    def format(self, context):
         return b"$".join([
-            self.name, self.method.encode("ascii"),
-            str(self.rounds).encode("ascii"), hexlify(salt), hash
+            context["name"],
+            context["method"].encode("ascii"),
+            str(context["rounds"]).encode("ascii"),
+            hexlify(context["salt"]),
+            hexlify(context["hash"])
         ])
 
     def verify(self, password, known_hash):
@@ -174,16 +185,24 @@ class PlainHasher(NamedHasher):
     name = b"plain"
 
     def create(self, password):
-        return self.name + b"$" + password
+        return self.format({"name": self.name, "hash": password})
+
+    def format(self, context):
+        return context["name"] + b"$" + context["hash"]
 
 
 class DigestHasher(NamedHasher):
     digest = None
 
     def create(self, password):
+        return self.format(
+            {"name": self.name, "hash": self.digest(password).digest()}
+        )
+
+    def format(self, context):
         return b"$".join([
-            self.name,
-            hexlify(self.digest(password).digest())
+            context["name"],
+            hexlify(context["hash"])
         ])
 
 
@@ -246,11 +265,17 @@ class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = hexlify(self.digest(salt + password).digest())
+        return self.format({
+            "name": self.name,
+            "salt": salt,
+            "hash": self.digest(salt + password).digest()
+        })
+
+    def format(self, context):
         return b"$".join([
-            self.name,
-            hexlify(salt),
-            hash
+            context["name"],
+            hexlify(context["salt"]),
+            hexlify(context["hash"])
         ])
 
     def parse(self, hash):
@@ -328,11 +353,17 @@ class HMACHasher(UpgradeableHasherMixin, NamedHasher):
 
     def create(self, password):
         salt = generate_salt(self.salt_length)
-        hash = hexlify(hmac.new(salt, password, self.digest).digest())
+        return self.format({
+            "name": self.name,
+            "salt": salt,
+            "hash": hmac.new(salt, password, self.digest).digest()
+        })
+
+    def format(self, context):
         return b"$".join([
-            self.name,
-            hexlify(salt),
-            hash
+            context["name"],
+            hexlify(context["salt"]),
+            hexlify(context["hash"])
         ])
 
     def parse(self, hash):
