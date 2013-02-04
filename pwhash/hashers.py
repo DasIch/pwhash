@@ -44,6 +44,8 @@ def generate_salt(salt_length):
 
 
 class Hasher(object):
+    name = None
+
     @classproperty
     def requires_config(cls):
         """
@@ -57,7 +59,12 @@ class Hasher(object):
         return bool(arguments)
 
     def parse(self, hash):
-        raise NotImplementedError()
+        if not b"$" in hash:
+            raise ValueError("name missing: %r" % hash)
+        name, hash = hash.split(b"$", 1)
+        if name != self.name:
+            raise ValueError("expected %r hash, got %r" % (self.name, name))
+        return hash
 
     def create(self, password):
         """
@@ -75,7 +82,7 @@ class Hasher(object):
         )
 
 
-class UpgradeableHasherMixin(object):
+class UpgradeableMixin(object):
     def upgrade(self, password, hash):
         """
         Returns a new hash if there is a better method than what was used for
@@ -93,30 +100,14 @@ class UpgradeableHasherMixin(object):
         return matches, None
 
 
-class NamedHasherMixin(object):
-    name = None
-
-    def parse(self, hash):
-        if not b"$" in hash:
-            raise ValueError("name missing: %r" % hash)
-        name, hash = hash.split(b"$", 1)
-        if name != self.name:
-            raise ValueError("expected %r hash, got %r" % (self.name, name))
-        return hash
-
-
-class UpgradeableHasher(UpgradeableHasherMixin, Hasher):
-    pass
-
-
-class NamedHasher(NamedHasherMixin, Hasher):
+class UpgradeableHasher(UpgradeableMixin, Hasher):
     pass
 
 
 _PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
 
 
-class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
+class PBKDF2Hasher(UpgradeableHasher):
     """
     A hasher that uses PBKDF2.
     """
@@ -129,7 +120,7 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
         self.hash_length = DIGEST_SIZES[method]
 
     def parse(self, hash):
-        hash = NamedHasher.parse(self, hash)
+        hash = UpgradeableHasher.parse(self, hash)
         method, rounds, salt, hash = hash.split(b"$")
         return _PBKDF2Hash(
             method.decode("ascii"), int(rounds), unhexlify(salt),
@@ -178,7 +169,7 @@ class PBKDF2Hasher(UpgradeableHasherMixin, NamedHasher):
             return self.create(password)
 
 
-class PlainHasher(NamedHasher):
+class PlainHasher(Hasher):
     """
     A hasher that uses a plain password as "hash".
     """
@@ -191,7 +182,7 @@ class PlainHasher(NamedHasher):
         return context["name"] + b"$" + context["hash"]
 
 
-class DigestHasher(NamedHasher):
+class DigestHasher(Hasher):
     digest = None
 
     def create(self, password):
@@ -257,7 +248,7 @@ class SHA512Hasher(DigestHasher):
 _SaltedDigestHash = namedtuple("_SaltedDigestHash", ["salt", "hash"])
 
 
-class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
+class SaltedDigestHasher(UpgradeableHasher):
     digest = None
 
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
@@ -279,7 +270,7 @@ class SaltedDigestHasher(UpgradeableHasherMixin, NamedHasher):
         ])
 
     def parse(self, hash):
-        hash = NamedHasher.parse(self, hash)
+        hash = Hasher.parse(self, hash)
         salt, hash = hash.split(b"$", 2)
         return _SaltedDigestHash(unhexlify(salt), hash)
 
@@ -345,7 +336,7 @@ class SaltedSHA512Hasher(SaltedDigestHasher):
 _HMACHash = namedtuple("_HMACHash", ["salt", "hash"])
 
 
-class HMACHasher(UpgradeableHasherMixin, NamedHasher):
+class HMACHasher(UpgradeableHasher):
     digest = None
 
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
@@ -367,7 +358,7 @@ class HMACHasher(UpgradeableHasherMixin, NamedHasher):
         ])
 
     def parse(self, hash):
-        salt, hash = NamedHasher.parse(self, hash).split(b"$", 1)
+        salt, hash = UpgradeableHasher.parse(self, hash).split(b"$", 1)
         return _HMACHash(unhexlify(salt), hash)
 
     def verify(self, password, known_hash):
@@ -450,7 +441,7 @@ class ConfigWarning(UserWarning):
     pass
 
 
-class PasswordHasher(UpgradeableHasher):
+class PasswordHasher(UpgradeableMixin):
     #: An :class:`~collections.OrderedDict` containing the hashers
     #: :class:`PasswordHasher` uses in descending order of recommendation.
     default_hasher_classes = ALL_HASHERS
@@ -503,17 +494,15 @@ class PasswordHasher(UpgradeableHasher):
         """
         return self.preferred_hasher.create(password)
 
-    def parse(self, hash):
-        name = hash.split(b"$", 1)[0]
-        return self.hashers[name], hash
+    def get_hasher(self, hash):
+        return self.hashers[hash.split(b"$", 1)[0]]
 
     def verify(self, password, hash):
-        hasher, hash = self.parse(hash)
-        return hasher.verify(password, hash)
+        return self.get_hasher(hash).verify(password, hash)
 
     def upgrade(self, password, hash):
-        hasher, hash = self.parse(hash)
+        hasher = self.get_hasher(hash)
         if hasher.name != self.preferred_hasher.name:
-            return self.preferred_hasher.create(password)
-        elif isinstance(hasher, UpgradeableHasherMixin):
+            return self.create(password)
+        elif isinstance(hasher, UpgradeableMixin):
             return hasher.upgrade(password, hash)
