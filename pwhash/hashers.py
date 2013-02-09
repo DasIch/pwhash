@@ -58,10 +58,10 @@ class Hasher(object):
         arguments = argspec.args[1:-len(argspec.defaults)]
         return bool(arguments)
 
-    def parse(self, hash):
-        if not b"$" in hash:
-            raise ValueError("name missing: %r" % hash)
-        name, hash = hash.split(b"$", 1)
+    def parse(self, formatted_hash):
+        if not b"$" in formatted_hash:
+            raise ValueError("name missing: %r" % formatted_hash)
+        name, hash = formatted_hash.split(b"$", 1)
         if name != self.name:
             raise ValueError("expected %r hash, got %r" % (self.name, name))
         return hash
@@ -72,31 +72,31 @@ class Hasher(object):
         """
         raise NotImplementedError()
 
-    def verify(self, password, hash):
+    def verify(self, password, formatted_hash):
         """
         Returns `True` if `hash` was created using `password`.
         """
         return constant_time_equal(
             self.parse(self.create(password)),
-            self.parse(hash)
+            self.parse(formatted_hash)
         )
 
 
 class UpgradeableMixin(object):
-    def upgrade(self, password, hash):
+    def upgrade(self, password, formatted_hash):
         """
         Returns a new hash if there is a better method than what was used for
         `hash`.
         """
         raise NotImplementedError()
 
-    def verify_and_upgrade(self, password, known_hash):
+    def verify_and_upgrade(self, password, formatted_hash):
         """
         Returns a tuple ``(is_correct_password, new_upgraded_hash)``.
         """
-        matches = self.verify(password, known_hash)
+        matches = self.verify(password, formatted_hash)
         if matches:
-            return matches, self.upgrade(password, known_hash)
+            return matches, self.upgrade(password, formatted_hash)
         return matches, None
 
 
@@ -119,9 +119,9 @@ class PBKDF2Hasher(UpgradeableHasher):
         self.salt_length = salt_length
         self.hash_length = DIGEST_SIZES[method]
 
-    def parse(self, hash):
-        hash = UpgradeableHasher.parse(self, hash)
-        method, rounds, salt, hash = hash.split(b"$")
+    def parse(self, formatted_hash):
+        formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
+        method, rounds, salt, hash = formatted_hash.split(b"$")
         return _PBKDF2Hash(
             method.decode("ascii"), int(rounds), unhexlify(salt),
             unhexlify(hash)
@@ -148,8 +148,8 @@ class PBKDF2Hasher(UpgradeableHasher):
             hexlify(context["hash"])
         ])
 
-    def verify(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def verify(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         hash = pbkdf2(
             password,
             parsed.salt,
@@ -159,8 +159,8 @@ class PBKDF2Hasher(UpgradeableHasher):
         )
         return constant_time_equal(hash, parsed.hash)
 
-    def upgrade(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def upgrade(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         if (self.salt_length > len(parsed.salt) or
             self.rounds > parsed.rounds or
             self.hash_length > len(parsed.hash) or
@@ -269,18 +269,18 @@ class SaltedDigestHasher(UpgradeableHasher):
             hexlify(context["hash"])
         ])
 
-    def parse(self, hash):
-        hash = Hasher.parse(self, hash)
-        salt, hash = hash.split(b"$", 2)
+    def parse(self, formatted_hash):
+        formatted_hash = Hasher.parse(self, formatted_hash)
+        salt, hash = formatted_hash.split(b"$", 2)
         return _SaltedDigestHash(unhexlify(salt), hash)
 
-    def verify(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def verify(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         hash = hexlify(self.digest(parsed.salt + password).digest())
         return constant_time_equal(hash, parsed.hash)
 
-    def upgrade(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def upgrade(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         if self.salt_length > len(parsed.salt):
             return self.create(password)
 
@@ -357,17 +357,17 @@ class HMACHasher(UpgradeableHasher):
             hexlify(context["hash"])
         ])
 
-    def parse(self, hash):
-        salt, hash = UpgradeableHasher.parse(self, hash).split(b"$", 1)
+    def parse(self, formatted_hash):
+        salt, hash = UpgradeableHasher.parse(self, formatted_hash).split(b"$", 1)
         return _HMACHash(unhexlify(salt), hash)
 
-    def verify(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def verify(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         hash = hexlify(hmac.new(parsed.salt, password, self.digest).digest())
         return constant_time_equal(hash, parsed.hash)
 
-    def upgrade(self, password, known_hash):
-        parsed = self.parse(known_hash)
+    def upgrade(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
         if self.salt_length > len(parsed.salt):
             return self.create(password)
 
@@ -494,15 +494,15 @@ class PasswordHasher(UpgradeableMixin):
         """
         return self.preferred_hasher.create(password)
 
-    def get_hasher(self, hash):
-        return self.hashers[hash.split(b"$", 1)[0]]
+    def get_hasher(self, formatted_hash):
+        return self.hashers[formatted_hash.split(b"$", 1)[0]]
 
-    def verify(self, password, hash):
-        return self.get_hasher(hash).verify(password, hash)
+    def verify(self, password, formatted_hash):
+        return self.get_hasher(formatted_hash).verify(password, formatted_hash)
 
-    def upgrade(self, password, hash):
-        hasher = self.get_hasher(hash)
+    def upgrade(self, password, formatted_hash):
+        hasher = self.get_hasher(formatted_hash)
         if hasher.name != self.preferred_hasher.name:
             return self.create(password)
         elif isinstance(hasher, UpgradeableMixin):
-            return hasher.upgrade(password, hash)
+            return hasher.upgrade(password, formatted_hash)
