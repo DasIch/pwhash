@@ -28,6 +28,8 @@ else:
         #       are different on each platform. However if precision is an
         #       issue this might need to be done.
         round_measure = 10000
+        # We use random "passwords" and "salts" to prevent the interpreter from
+        # performing optimizations that mess with the timings.
         arguments = [
             (os.urandom(password_length), os.urandom(salt_length))
             for _ in range(5)
