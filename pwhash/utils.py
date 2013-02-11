@@ -70,6 +70,9 @@ def constant_time_equal(a, b):
     """
     Compares two byte strings `a` and `b` for equality in constant time.
     """
+    # TODO: I can't be sure about whether the constant time property will hold
+    # on any interpreter, therefore this should be implemented in C, OpenBSD
+    # has a timingsafe_bcmp that can probably be used.
     if len(a) != len(b):
         return False
     result = 0
