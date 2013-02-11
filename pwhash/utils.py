@@ -68,7 +68,11 @@ determine_pbkdf2_rounds.__doc__ = """
 
 def constant_time_equal(a, b):
     """
-    Compares two byte strings `a` and `b` for equality in constant time.
+    Compares two byte strings `a` and `b` for equality in time proportional to
+    the length of the shortest string.
+
+    This should be used to compare an untrusted string with a string whose
+    contents must not be exposed.
     """
     # TODO: I can't be sure about whether the constant time property will hold
     # on any interpreter, therefore this should be implemented in C, OpenBSD
