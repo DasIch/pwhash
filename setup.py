@@ -2,9 +2,13 @@
 import sys
 from setuptools import setup
 
+import pwhash.utils
 import pwhash._openssl
 
-ext_modules = [pwhash._openssl.ffi.verifier.get_extension()]
+ext_modules = [
+    pwhash.utils.ffi.verifier.get_extension(),
+    pwhash._openssl.ffi.verifier.get_extension()
+]
 
 if sys.platform == "darwin":
     import pwhash._commoncrypto

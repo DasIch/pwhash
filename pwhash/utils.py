@@ -10,8 +10,15 @@ import os
 import sys
 import time
 import math
+from functools import partial
+
+from cffi import FFI
 
 from pwhash.algorithms import pbkdf2
+
+
+PACKAGE_PATH = os.path.abspath(os.path.dirname(__file__))
+
 
 if sys.platform == "darwin":
     from pwhash._commoncrypto import determine_pbkdf2_rounds
@@ -68,6 +75,20 @@ determine_pbkdf2_rounds.__doc__ = """
 """
 
 
+ffi = FFI()
+ffi.cdef("""
+    int timingsafe_bcmp(const void *b1, const void *b2, size_t n);
+""")
+_timingsafe_bcmp = ffi.verify(
+    """
+        #include <timingsafe_bcmp.h>
+    """,
+    sources=[os.path.join(PACKAGE_PATH, "timingsafe_bcmp.c")],
+    include_dirs=[PACKAGE_PATH],
+    ext_packages="pwhash"
+)
+
+
 def constant_time_equal(a, b):
     """
     Compares two byte strings `a` and `b` for equality in time proportional to
@@ -76,18 +97,9 @@ def constant_time_equal(a, b):
     This should be used to compare an untrusted string with a string whose
     contents must not be exposed.
     """
-    # TODO: I can't be sure about whether the constant time property will hold
-    # on any interpreter, therefore this should be implemented in C, OpenBSD
-    # has a timingsafe_bcmp that can probably be used.
     if len(a) != len(b):
         return False
-    result = 0
-    for x, y in zip(a, b):
-        if sys.version_info[0] >= 3:
-            result |= x ^ y
-        else:
-            result |= ord(x) ^ ord(y)
-    return result == 0
+    return _timingsafe_bcmp.timingsafe_bcmp(a, b, len(a)) == 0
 
 
 class classproperty(property):
