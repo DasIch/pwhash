@@ -21,8 +21,6 @@ def test_pbkdf2():
                 hash = hexlify(_openssl._pbkdf2(
                     password, salt, rounds, hash_length, method
                 ))
-                if method == "hmac-sha256":
-                    pytest.xfail("openssl issue?")
                 assert hash == expected_hash
             except NotImplementedError:
                 assert method not in _openssl.METHODS

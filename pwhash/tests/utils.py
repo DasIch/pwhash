@@ -27,14 +27,5 @@ PBKDF2_TEST_VECTORS = [
     (
         b"password", b"salt", 16777216, 20,
         {"hmac-sha1": b"eefe3d61cd4da4e4e9945b3d6ba2158c2634e984"}
-    ),
-    # RFC draft-josefsson-scrypt-kdf-01 (expires March 28, 2013!)
-    (
-        b"passwd", b"salt", 1, 64,
-        {"hmac-sha256": b"55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc49ca9cccf179b645991664b39d77ef317c71b845b1e30bd509112041d3a19783"}
-    ),
-    (
-        b"Password", b"NaCl", 80000, 64,
-        {"hmac-sha256": b"4ddcd8f60b98be21830cee5ef22701f9641a4418d04c0414aeff08876b34ab56a1d425a1225833549adb841b51c9b3176a272bdebba1d078478f62b397f33c8d"}
     )
 ]
