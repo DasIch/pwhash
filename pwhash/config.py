@@ -10,7 +10,6 @@ from __future__ import print_function
 import sys
 import json
 import textwrap
-import argparse
 
 from docopt import docopt
 
