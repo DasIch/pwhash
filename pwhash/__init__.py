@@ -7,3 +7,6 @@
     :license: BSD, see LICENSE.rst for details
 """
 from pwhash.hashers import PasswordHasher
+
+
+__version__ = u"0.0.1-dev"

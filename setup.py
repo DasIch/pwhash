@@ -26,10 +26,10 @@ setup(
     packages=["pwhash", "pwhash.tests"],
     entry_points = {
         "console_scripts": [
-            "pwhash-config = pwhash.config:config"
+            "pwhash-config = pwhash.config:run"
         ]
     },
-    install_requires=["cffi"],
+    install_requires=["cffi>=0.5", "docopt>=0.6.0"],
     zip_safe=False,
     ext_modules=ext_modules,
     classifiers=[

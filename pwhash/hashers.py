@@ -451,14 +451,11 @@ class PasswordHasher(UpgradeableMixin):
         """
         Creates a :class:`PasswordHasher` from `config`.
 
-        `config` is expected to be a dictionary mapping hasher names to
-        dictionaries containing the `__init__` arguments.
-
         The hashers will be looked up in :attr:`default_hasher_classes`.
         """
         hashers = []
         for name, hasher_cls in cls.default_hasher_classes.items():
-            hasher_config = config.get(name, {})
+            hasher_config = config["hashers"].get(name, {})
             if hasher_cls.requires_config and not hasher_config:
                 warnings.warn(
                     "configuration for %r is missing" % name,

@@ -82,10 +82,12 @@ def test_password_hasher(recwarn):
     assert hash is not None
 
     config = {
-        b"pbkdf2": {
-            "rounds": 1,
-            "method": "hmac-sha1",
-            "salt_length": 16
+        "hashers": {
+            b"pbkdf2": {
+                "rounds": 1,
+                "method": "hmac-sha1",
+                "salt_length": 16
+            }
         }
     }
     for name, hasher, in ALL_HASHERS.items():
@@ -97,7 +99,7 @@ def test_password_hasher(recwarn):
 
     assert not recwarn.list
 
-    pw_hasher = PasswordHasher.from_config({})
+    pw_hasher = PasswordHasher.from_config({"hashers": {}})
     length = len(recwarn.list)
     for name in PasswordHasher.default_hasher_classes:
         if name == b"pbkdf2":

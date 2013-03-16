@@ -13,97 +13,206 @@ import textwrap
 
 from docopt import docopt
 
-from pwhash import hashers
+from pwhash import hashers, __version__
 from pwhash.utils import determine_pbkdf2_rounds
 
 
+APPLICATION_VERSION = 1
+DEPLOYMENT_VERSION = 1
+
 _missing = object()
-def get_int(prompt, default=_missing):
-    raw_int = raw_input(prompt)
-    return int(raw_int) if raw_int or default is _missing else default
 
 
-def get_float(prompt):
-    return float(raw_input(prompt))
-
-
-def get_bool(prompt, default=False):
-    raw_bool = raw_input(prompt)
-    if raw_bool == "y":
-        return True
-    elif raw_bool == "n":
-        return False
-    else:
-        return default
-
-
-def config(argv=sys.argv):
-    """
-    usage: pwhash-config <command> [<args>...]
-           pwhash-config (-h | --help)
-
-    commands:
-      create  Create pwhash configuration
-    """
-    arguments = docopt(
-        textwrap.dedent(config.__doc__), argv=argv[1:], options_first=True
-    )
-    command_argv = [arguments["<command>"]] + arguments["<args>"]
-    if arguments["<command>"] == "create":
-        config_create(
-            docopt(textwrap.dedent(config_create.__doc__), argv=command_argv)
-        )
-    else:
-        print(u"%r is not a pwhash-config command" % arguments["<command>"])
-
-
-def config_create(arguments):
-    """
-    usage: pwhash-config create [options]
-
-    options:
-      -o, --out=<file>  Configuration file [default: pwhash.json]
-    """
-    config_file_path = arguments["--out"]
-
+def int_input(prompt, fail_message, default=_missing):
     while True:
-        salt_length = get_int(
-            u"Which salt length should be used in bytes? [default: %d] " % hashers.DEFAULT_SALT_LENGTH,
-            hashers.DEFAULT_SALT_LENGTH
-        )
-        if salt_length < hashers.RECOMMENDED_MIN_SALT_LENGTH:
-            print(u"That's below the NIST recommended minimum salt length of %d bytes" % hashers.RECOMMENDED_MIN_SALT_LENGTH)
-            if get_bool(u"Are you sure you want to use that salt length? [n] "):
-                break
+        raw = raw_input(prompt)
+        if raw or default is _missing:
+            try:
+                return int(raw)
+            except ValueError:
+                print(fail_message % raw)
         else:
-            break
-    print()
-    print(u"pbkdf2")
-    rounds = get_int(u"How many rounds should be used? [default: auto] ", None)
-    if rounds is None:
-        password_length = get_int(u"What is the minimum password length? ")
-        duration = get_float(
-            u"How much time are you willing to spend on hashing in seconds? "
-        )
-        method = "hmac-sha1"
-        rounds = determine_pbkdf2_rounds(
-            password_length,
-            salt_length,
-            hashers.DIGEST_SIZES[method],
-            method,
-            duration
-        )
-        print(u"Using %d rounds" % rounds)
+            return default
 
-    config = {}
-    for name, hasher in hashers.ALL_HASHERS.iteritems():
-        if name.startswith("salted") or name.startswith("hmac"):
-            config[name] = {"salt_length": salt_length}
-    config["pbkdf2"] = {
-        "rounds": rounds,
-        "method": method,
-        "salt_length": salt_length
-    }
 
-    with open(config_file_path, "wb") as config_file:
-        json.dump(config, config_file, indent=4)
+def float_input(prompt, fail_message, default=_missing):
+    while True:
+        raw = raw_input(prompt)
+        if raw or default is _missing:
+            try:
+                return float(raw)
+            except ValueError:
+                print(fail_message % raw)
+        else:
+            return default
+
+
+class ConfigCLI(object):
+    def __init__(self):
+        self.commands = {
+            "create": self.create,
+            "compile": self.compile,
+            "upgrade": self.upgrade
+        }
+
+    def run(self, argv=sys.argv):
+        """
+        usage: pwhash-config [-hv] <command> [<args>...]
+               pwhash-config (-h | --help)
+               pwhash-config (-v | --version)
+
+        options:
+          -h, --help     Shows this text
+          -v, --version  Shows the version number.
+
+        commands:
+          create   Create pwhash application configuration
+          compile  Compile application configuration for deployment
+          upgrade  Upgraded pwhash application configuration
+        """
+        arguments = docopt(
+            textwrap.dedent(self.run.__doc__),
+            argv=argv[1:],
+            options_first=True,
+            version=textwrap.dedent(u"""\
+                pwhash version: %s
+                application config version: %d
+                deployment config version: %d
+            """) % (__version__, APPLICATION_VERSION, DEPLOYMENT_VERSION)
+        )
+        command_arguments = [arguments["<command>"]] + arguments["<args>"]
+        command = self.commands.get(arguments["<command>"])
+        if command is None:
+            self.fail(
+                u"%r is not a pwhash-config command" % arguments["<command>"]
+            )
+        else:
+            command(
+                docopt(
+                    textwrap.dedent(command.__doc__),
+                    argv=command_arguments
+                )
+            )
+
+    def fail(self, message):
+        print(message)
+        sys.exit(1)
+
+    def info(self, message):
+        print(message)
+        sys.exit(0)
+
+    def create(self, arguments):
+        """
+        usage: pwhash-config create [-o <file>]
+
+        options:
+          -o, --out=<file>  Configuration file [default: pwhash.json]
+        """
+        while True:
+            min_password_length = int_input(
+                u"What is the minimum password length? ",
+                u"%r is not an integer"
+            )
+            if min_password_length > 0:
+                break
+            print(u"Passwords must be at least one character long")
+
+        while True:
+            duration = float_input(
+                u"How long should hashing take in seconds? ",
+                "%r is not a float"
+            )
+            if duration > 0:
+                break
+            print(u"The duration must be more than 0s")
+
+        # If you change `config` and nobody documented incrementing
+        # APPLICATION_VERSION in CHANGELOG.rst, increment APPLICATION_VERSION
+        # and document that in CHANGELOG.rst.
+
+        config = {
+            "application_version": APPLICATION_VERSION,
+            "min_password_length": min_password_length,
+            "duration": duration
+        }
+
+        with open(arguments["--out"], "wb") as config_file:
+            json.dump(config, config_file, indent=4)
+
+        self.info(u"\n%r created!" % arguments["--out"])
+
+    def compile(self, arguments):
+        """
+        usage: pwhash-config compile [-o <file>] <application-config>
+
+        options:
+          -o, --out=<file>  Configuration file [default: pwhashc.json]
+
+        Compiles an application config into a deployment config. This should be
+        done on the machine on which the application is being deployed.
+        """
+        with open(arguments["<application-config>"], "rb") as config_file:
+            application_config = json.load(config_file)
+
+        if application_config["application_version"] < APPLICATION_VERSION:
+            self.fail(u"Configuration needs to be upgraded.")
+        elif application_config["application_version"] > APPLICATION_VERSION:
+            self.fail(u"Configuration incompatible; upgrade pwhash")
+
+        # If you change `config` and nobody documented incrementing
+        # DEPLOYMENT_VERSION in CHANGELOG.rst, increment DEPLOYMENT_VERSION and
+        # document that in CHANGELOG.rst.
+
+        pbkdf2_method = "hmac-sha1"
+        config = {
+            "version": {
+                "application": application_config["application_version"],
+                "deployment": DEPLOYMENT_VERSION
+            },
+            "hashers": {
+                b"pbkdf2": {
+                    "rounds": determine_pbkdf2_rounds(
+                        application_config["min_password_length"],
+                        hashers.DEFAULT_SALT_LENGTH,
+                        hashers.DIGEST_SIZES[pbkdf2_method],
+                        pbkdf2_method,
+                        application_config["duration"]
+                    ),
+                    "method": pbkdf2_method,
+                    "salt_length": hashers.DEFAULT_SALT_LENGTH
+                }
+            }
+        }
+
+        for name, hasher in hashers.ALL_HASHERS.items():
+            if name.startswith(b"salted") or name.startswith(b"hmac"):
+                config["hashers"][name] = {
+                    "salt_length": hashers.DEFAULT_SALT_LENGTH
+                }
+
+        with open(arguments["--out"], "wb") as config_file:
+            json.dump(config, config_file, indent=4)
+
+        self.info(u"%r created!" % arguments["--out"])
+
+    def upgrade(self, arguments):
+        """
+        usage: pwhash-config upgrade <application-config>
+
+        Helps you upgrade the application config without having to redo
+        everything.
+        """
+        with open(arguments["<application-config>"], "rb") as config_file:
+            config = json.load(config_file)
+
+        if config["application-version"] == APPLICATION_VERSION:
+            self.info(u"application config already at most recent version")
+        else:
+            self.fail(u"invalid application config")
+
+        with open(arguments["<application-config>"], "wb") as config_file:
+            json.dump(config, config_file, indent=4)
+
+
+run = ConfigCLI().run
