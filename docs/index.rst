@@ -31,3 +31,13 @@ API
 
    api/pwhash.rst
    api/hashers.rst
+
+
+Additional Notes
+----------------
+
+.. toctree::
+
+   other/contributing.rst
+   other/changelog.rst
+   other/license.rst
