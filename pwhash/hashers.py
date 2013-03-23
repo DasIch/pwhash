@@ -15,6 +15,20 @@ import warnings
 from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
+try:
+    import bcrypt # requires py-bcrypt
+    import pkg_resources
+except ImportError:
+    bcrypt = None
+else:
+    bcrypt_version = pkg_resources.get_distribution("py-bcrypt").version
+    if bcrypt_version.split(".") <= ["0", "2"]:
+        # py-bcrypt 0.2 has a concurrency bug that allows an attacker to
+        # potentially bypass password verification.
+        bcrypt = None
+        warnings.warn(u"insecure py-bcrypt <= 0.2 installed; upgrade!")
+    del bcrypt_version
+
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import constant_time_equal, classproperty
 
@@ -55,7 +69,11 @@ class Hasher(object):
         if cls.__init__ is object.__init__:
             return False
         argspec = inspect.getargspec(cls.__init__)
-        arguments = argspec.args[1:-len(argspec.defaults)]
+        if argspec.defaults is None:
+            default_offset = len(argspec.args)
+        else:
+            default_offset = -len(argspec.defaults)
+        arguments = argspec.args[1:default_offset]
         return bool(arguments)
 
     def parse(self, formatted_hash):
@@ -102,6 +120,53 @@ class UpgradeableMixin(object):
 
 class UpgradeableHasher(UpgradeableMixin, Hasher):
     pass
+
+
+_BCryptHash = namedtuple("_BCryptHash", ["cost", "hash"])
+
+
+class BCryptHasher(UpgradeableHasher):
+    """
+    A hasher that uses bcrypt.
+    """
+    name = b"bcrypt"
+
+    def __init__(self, cost):
+        self.cost = cost
+
+        if bcrypt is None:
+            raise RuntimeError("bcrypt unavailable; requires py-bcrypt >= 0.3")
+
+    def parse(self, formatted_hash):
+        formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
+        cost, hash = formatted_hash.split(b"$", 1)
+        return _BCryptHash(int(cost), hash)
+
+    def format(self, context):
+        return b"$".join([
+            context["name"],
+            str(context["cost"]).encode("ascii"),
+            context["hash"]
+        ])
+
+    def create(self, password):
+        return self.format({
+            "name": self.name,
+            "cost": self.cost,
+            "hash": bcrypt.hashpw(password, bcrypt.gensalt(self.cost))
+        })
+
+    def verify(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
+        return constant_time_equal(
+            bcrypt.hashpw(password, parsed.hash),
+            parsed.hash
+        )
+
+    def upgrade(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
+        if self.cost > parsed.cost:
+            return self.create(password)
 
 
 _PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
@@ -420,7 +485,8 @@ class HMACSHA512(HMACHasher):
     digest = hashlib.sha512
 
 
-ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
+ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in filter(None, [
+    None if bcrypt is None else BCryptHasher,
     PBKDF2Hasher,
     # hmac
     HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
@@ -434,7 +500,7 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in [
     MD5Hasher,
     # plain
     PlainHasher
-])
+]))
 
 
 class ConfigWarning(UserWarning):

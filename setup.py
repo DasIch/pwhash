@@ -15,6 +15,14 @@ if sys.platform == "darwin":
     ext_modules.append(pwhash._commoncrypto.ffi.verifier.get_extension())
 
 
+if sys.version_info >= (3, 0):
+    extras_require = {}
+else:
+    extras_require = {
+        "bcrypt": ["py-bcrypt>=0.3"]
+    }
+
+
 setup(
     name="pwhash",
     version="0.1-dev",
@@ -30,6 +38,7 @@ setup(
         ]
     },
     install_requires=["cffi>=0.5", "docopt>=0.6.0"],
+    extras_require=extras_require,
     zip_safe=False,
     ext_modules=ext_modules,
     classifiers=[

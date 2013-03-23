@@ -4,6 +4,9 @@ pwhash.hashers
 .. module:: pwhash.hashers
 
 
+.. autoclass:: BCryptHasher
+   :members:
+
 .. autoclass:: PBKDF2Hasher
    :members:
 

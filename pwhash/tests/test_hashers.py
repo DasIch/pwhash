@@ -8,14 +8,50 @@
 """
 from pwhash import PasswordHasher
 from pwhash.hashers import (
-    PBKDF2Hasher, PlainHasher, MD5Hasher, SHA1Hasher, SHA224Hasher,
-    SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1, HMACSHA224,
-    HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher, SaltedSHA1Hasher,
-    SaltedSHA224Hasher, SaltedSHA256Hasher, SaltedSHA384Hasher,
-    SaltedSHA512Hasher, ALL_HASHERS, ConfigWarning
+    BCryptHasher, PBKDF2Hasher, PlainHasher, MD5Hasher, SHA1Hasher,
+    SHA224Hasher, SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1,
+    HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher,
+    SaltedSHA1Hasher, SaltedSHA224Hasher, SaltedSHA256Hasher,
+    SaltedSHA384Hasher, SaltedSHA512Hasher, ALL_HASHERS, ConfigWarning
 )
 
+try:
+    import bcrypt
+except ImportError:
+    bcrypt = None
+
 import pytest
+
+
+def test_bcrypt_hasher():
+    if bcrypt is None:
+        with pytest.raises(RuntimeError):
+            BCryptHasher(1)
+    else:
+        hasher = BCryptHasher(1)
+        assert hasher.create(b"password") != hasher.create(b"password")
+
+        hash = hasher.create(b"password")
+        assert hasher.verify(b"password", hash)
+        assert not hasher.verify(b"other-password", hash)
+
+        with pytest.raises(ValueError):
+            hasher.verify(b"password", b"something")
+
+        upgraded = BCryptHasher(2)
+        assert hasher.upgrade(b"password", hash) is None
+        assert upgraded.upgrade(b"password", hash) is not None
+
+        assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
+        assert hasher.verify_and_upgrade(b"other-password", hash) == (False, None)
+        verified, new_hash = upgraded.verify_and_upgrade(b"password", hash)
+        assert verified
+        assert new_hash is not None
+
+        hash = upgraded.create(b"password")
+        assert hasher.verify(b"password", hash)
+        assert hasher.upgrade(b"password", hash) is None
+        assert hasher.verify_and_upgrade(b"password", hash) == (True, None)
 
 
 def test_pbkdf2_hasher():
@@ -87,7 +123,10 @@ def test_password_hasher(recwarn):
                 "rounds": 1,
                 "method": "hmac-sha1",
                 "salt_length": 16
-            }
+            },
+            b"bcrypt": {
+                "cost": 12
+            },
         }
     }
     for name, hasher, in ALL_HASHERS.items():
@@ -100,14 +139,12 @@ def test_password_hasher(recwarn):
     assert not recwarn.list
 
     pw_hasher = PasswordHasher.from_config({"hashers": {}})
-    length = len(recwarn.list)
-    for name in PasswordHasher.default_hasher_classes:
-        if name == b"pbkdf2":
-            warning = recwarn.pop(ConfigWarning)
-            new_length = len(recwarn.list)
-            assert new_length < length
-            length = new_length
-            assert name.decode("ascii") in str(warning.message)
+
+    if bcrypt is not None:
+        warning = recwarn.pop(ConfigWarning)
+        assert "bcrypt" in str(warning.message)
+    warning = recwarn.pop(ConfigWarning)
+    assert "pbkdf2" in str(warning.message)
 
 
 @pytest.mark.parametrize("hasher_cls", [

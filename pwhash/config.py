@@ -181,6 +181,9 @@ class ConfigCLI(object):
                     ),
                     "method": pbkdf2_method,
                     "salt_length": hashers.DEFAULT_SALT_LENGTH
+                },
+                b"bcrypt": {
+                    "cost": 12
                 }
             }
         }
