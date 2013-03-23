@@ -120,3 +120,38 @@ def _import_bcrypt():
         warnings.warn("insecure py-bcrypt <= 0.2 installed; upgrade!")
     else:
         return bcrypt
+
+
+bcrypt = _import_bcrypt()
+
+
+def determine_bcrypt_cost(password_length, duration):
+    """
+    Determines the cost needed for hashing to take approximately `duration`
+    seconds.
+
+    The same caveats as for :func:`determine_pbkdf2_rounds` apply.
+    """
+    if bcrypt is None:
+        raise RuntimeError("requires py-bcrypt >= 0.3")
+    round_measure = previous_round_measure = 12
+    while True:
+        start = time.clock()
+        bcrypt.hashpw(
+            os.urandom(password_length),
+            bcrypt.gensalt(round_measure)
+        )
+        end = time.clock()
+        elapsed = end - start
+        if elapsed < duration:
+            if previous_round_measure > round_measure:
+                round_measure += 1 # rounding up...
+                break
+            previous_round_measure = round_measure
+            round_measure += 1
+        else:
+            if previous_round_measure < round_measure:
+                break
+            previous_round_measure = round_measure
+            round_measure -= 1
+    return round_measure

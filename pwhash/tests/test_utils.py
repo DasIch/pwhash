@@ -6,7 +6,10 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from pwhash.utils import determine_pbkdf2_rounds, constant_time_equal
+from pwhash.utils import (
+    determine_pbkdf2_rounds, constant_time_equal, _import_bcrypt,
+    determine_bcrypt_cost
+)
 
 import pytest
 
@@ -27,3 +30,12 @@ def test_constant_time_equal():
     assert constant_time_equal(b"foo", b"foo")
     assert not constant_time_equal(b"foo", b"bar")
     assert not constant_time_equal(b"bar", b"foo")
+
+
+def test_determine_bcrypt_cost():
+    bcrypt = _import_bcrypt()
+    if bcrypt is None:
+        with pytest.raises(RuntimeError):
+            determine_bcrypt_cost(8, 0.1)
+    else:
+        assert determine_bcrypt_cost(8, 0.1) > 0

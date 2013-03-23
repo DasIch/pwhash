@@ -14,7 +14,7 @@ import textwrap
 from docopt import docopt
 
 from pwhash import hashers, __version__
-from pwhash.utils import determine_pbkdf2_rounds
+from pwhash.utils import determine_pbkdf2_rounds, determine_bcrypt_cost
 
 
 APPLICATION_VERSION = 1
@@ -187,7 +187,15 @@ class ConfigCLI(object):
                 }
             }
         }
-
+        try:
+            config["hashers"]["bcrypt"] = {
+                "cost": determine_bcrypt_cost(
+                    application_config["min_password_length"],
+                    application_config["duration"]
+                )
+            }
+        except RuntimeError:
+            pass
         for name, hasher in hashers.ALL_HASHERS.items():
             if name.startswith(b"salted") or name.startswith(b"hmac"):
                 config["hashers"][name] = {
