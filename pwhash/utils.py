@@ -10,9 +10,11 @@ import os
 import sys
 import time
 import math
+import warnings
 from functools import partial
 
 from cffi import FFI
+import pkg_resources
 
 from pwhash.algorithms import pbkdf2
 
@@ -106,3 +108,15 @@ class classproperty(property):
     def __get__(self, instance, cls):
         return self.fget(cls)
     # __set__ and __delete__ can only be implemented with metaclasses if at all
+
+
+def _import_bcrypt():
+    try:
+        import bcrypt
+    except ImportError:
+        return None
+    bcrypt_version = pkg_resources.get_distribution("py-bcrypt").version
+    if bcrypt_version.split(".") < ["0", "3"]:
+        warnings.warn("insecure py-bcrypt <= 0.2 installed; upgrade!")
+    else:
+        return bcrypt

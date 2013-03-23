@@ -14,12 +14,9 @@ from pwhash.hashers import (
     SaltedSHA1Hasher, SaltedSHA224Hasher, SaltedSHA256Hasher,
     SaltedSHA384Hasher, SaltedSHA512Hasher, ALL_HASHERS, ConfigWarning
 )
+from pwhash.utils import _import_bcrypt
 
-try:
-    import bcrypt
-except ImportError:
-    bcrypt = None
-
+bcrypt = _import_bcrypt()
 import pytest
 
 

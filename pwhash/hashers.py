@@ -15,22 +15,10 @@ import warnings
 from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
-try:
-    import bcrypt # requires py-bcrypt
-    import pkg_resources
-except ImportError:
-    bcrypt = None
-else:
-    bcrypt_version = pkg_resources.get_distribution("py-bcrypt").version
-    if bcrypt_version.split(".") <= ["0", "2"]:
-        # py-bcrypt 0.2 has a concurrency bug that allows an attacker to
-        # potentially bypass password verification.
-        bcrypt = None
-        warnings.warn(u"insecure py-bcrypt <= 0.2 installed; upgrade!")
-    del bcrypt_version
-
 from pwhash.algorithms import pbkdf2
-from pwhash.utils import constant_time_equal, classproperty
+from pwhash.utils import constant_time_equal, classproperty, _import_bcrypt
+
+bcrypt = _import_bcrypt()
 
 
 DIGEST_SIZES = {
