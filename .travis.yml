@@ -2,5 +2,10 @@ language: python
 python:
   - 2.7
   - 3.3
-install: pip install --use-mirrors -r requirements.txt
+env:
+  - BCRYPT=0
+  - BCRYPT=1
+install:
+  - pip install --use-mirrors -r requirements.txt
+  - "if [[ $BCRYPT == 1 ]]; then pip install py-bcrypt; fi"
 script: py.test
