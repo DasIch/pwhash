@@ -77,8 +77,8 @@ class ConfigCLI(object):
             version=textwrap.dedent(u"""\
                 pwhash version: %s
                 application config version: %d
-                deployment config version: %d
-            """) % (__version__, APPLICATION_VERSION, DEPLOYMENT_VERSION)
+                deployment config version: %d"""
+            ) % (__version__, APPLICATION_VERSION, DEPLOYMENT_VERSION)
         )
         command_arguments = [arguments["<command>"]] + arguments["<args>"]
         command = self.commands.get(arguments["<command>"])
