@@ -217,7 +217,7 @@ class ConfigCLI(object):
         with open(arguments["<application-config>"], "rb") as config_file:
             config = json.load(config_file)
 
-        if config["application-version"] == APPLICATION_VERSION:
+        if config["application_version"] == APPLICATION_VERSION:
             self.info(u"application config already at most recent version")
         else:
             self.fail(u"invalid application config")
