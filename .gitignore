@@ -8,3 +8,4 @@ build/
 *.so
 pwhash.json
 pwhashc.json
+.DS_Store
