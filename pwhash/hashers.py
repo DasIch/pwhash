@@ -41,6 +41,12 @@ RECOMMENDED_MIN_SALT_LENGTH = 16 # 128 bit
 DEFAULT_SALT_LENGTH = RECOMMENDED_MIN_SALT_LENGTH * 2
 
 
+try:
+    text_type = unicode
+except NameError:
+    text_type = str
+
+
 def generate_salt(salt_length):
     return os.urandom(salt_length)
 
@@ -76,12 +82,22 @@ class Hasher(object):
         """
         Returns a hash for `password`.
         """
+        if isinstance(password, text_type):
+            password = password.encode("utf-8")
+        return self._create_from_bytes(password)
+
+    def _create_from_bytes(self, password):
         raise NotImplementedError()
 
     def verify(self, password, formatted_hash):
         """
         Returns `True` if `hash` was created using `password`.
         """
+        if isinstance(password, text_type):
+            password = password.encode("utf-8")
+        return self._verify_from_bytes(password, formatted_hash)
+
+    def _verify_from_bytes(self, password, formatted_hash):
         return constant_time_equal(
             self.parse(self.create(password)),
             self.parse(formatted_hash)
@@ -137,14 +153,14 @@ class BCryptHasher(UpgradeableHasher):
             context["hash"]
         ])
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         return self.format({
             "name": self.name,
             "cost": self.cost,
             "hash": bcrypt.hashpw(password, bcrypt.gensalt(self.cost))
         })
 
-    def verify(self, password, formatted_hash):
+    def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
         return constant_time_equal(
             bcrypt.hashpw(password, parsed.hash),
@@ -180,7 +196,7 @@ class PBKDF2Hasher(UpgradeableHasher):
             unhexlify(hash)
         )
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
         return self.format({
             "name": self.name,
@@ -201,7 +217,7 @@ class PBKDF2Hasher(UpgradeableHasher):
             hexlify(context["hash"])
         ])
 
-    def verify(self, password, formatted_hash):
+    def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
         hash = pbkdf2(
             password,
@@ -228,7 +244,7 @@ class PlainHasher(Hasher):
     """
     name = b"plain"
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         return self.format({"name": self.name, "hash": password})
 
     def format(self, context):
@@ -238,7 +254,7 @@ class PlainHasher(Hasher):
 class DigestHasher(Hasher):
     digest = None
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         return self.format(
             {"name": self.name, "hash": self.digest(password).digest()}
         )
@@ -307,7 +323,7 @@ class SaltedDigestHasher(UpgradeableHasher):
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
         self.salt_length = salt_length
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
         return self.format({
             "name": self.name,
@@ -327,7 +343,7 @@ class SaltedDigestHasher(UpgradeableHasher):
         salt, hash = formatted_hash.split(b"$", 2)
         return _SaltedDigestHash(unhexlify(salt), hash)
 
-    def verify(self, password, formatted_hash):
+    def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
         hash = hexlify(self.digest(parsed.salt + password).digest())
         return constant_time_equal(hash, parsed.hash)
@@ -395,7 +411,7 @@ class HMACHasher(UpgradeableHasher):
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
         self.salt_length = salt_length
 
-    def create(self, password):
+    def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
         return self.format({
             "name": self.name,
@@ -414,7 +430,7 @@ class HMACHasher(UpgradeableHasher):
         salt, hash = UpgradeableHasher.parse(self, formatted_hash).split(b"$", 1)
         return _HMACHash(unhexlify(salt), hash)
 
-    def verify(self, password, formatted_hash):
+    def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
         hash = hexlify(hmac.new(parsed.salt, password, self.digest).digest())
         return constant_time_equal(hash, parsed.hash)

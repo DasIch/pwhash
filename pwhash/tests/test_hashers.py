@@ -28,8 +28,8 @@ def test_bcrypt_hasher():
         hasher = BCryptHasher(1)
         assert hasher.create(b"password") != hasher.create(b"password")
 
-        hash = hasher.create(b"password")
-        assert hasher.verify(b"password", hash)
+        hash = hasher.create(u"password")
+        assert hasher.verify(u"password", hash)
         assert not hasher.verify(b"other-password", hash)
 
         with pytest.raises(ValueError):
@@ -55,8 +55,8 @@ def test_pbkdf2_hasher():
     hasher = PBKDF2Hasher(1)
     assert hasher.create(b"password") != hasher.create(b"password")
 
-    hash = hasher.create(b"password")
-    assert hasher.verify(b"password", hash)
+    hash = hasher.create(u"password")
+    assert hasher.verify(u"password", hash)
     assert not hasher.verify(b"other-password", hash)
 
     with pytest.raises(ValueError):
@@ -86,6 +86,8 @@ def test_plain_hasher():
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
 
+    assert hasher.verify(u"password", hasher.create(u"password"))
+
     with pytest.raises(ValueError):
         hasher.verify(b"password", b"something")
 
@@ -97,6 +99,8 @@ def test_password_hasher(recwarn):
     hash = pw_hasher.create(b"password")
     assert pw_hasher.verify(b"password", hash)
     assert pw_hasher.verify_and_upgrade(b"password", hash) == (True, None)
+
+    assert pw_hasher.verify(u"password", pw_hasher.create(u"password"))
 
     pbkdf2_hasher = PBKDF2Hasher(1)
     upgraded = PasswordHasher([pbkdf2_hasher, plain_hasher])
@@ -153,6 +157,8 @@ def test_digest_hashers(hasher_cls):
     hash = hasher.create(b"password")
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
+    assert hasher.verify(u"password", hasher.create(u"password"))
+
     with pytest.raises(ValueError):
         hasher.verify(b"password", b"something")
 
@@ -167,6 +173,7 @@ def test_salting_hashers(hasher_cls):
     hash = hasher.create(b"password")
     assert hasher.verify(b"password", hash)
     assert not hasher.verify(b"other-password", hash)
+    assert hasher.verify(u"password", hasher.create(u"password"))
     with pytest.raises(ValueError):
         hasher.verify(b"password", b"something")
     assert hasher.upgrade(b"password", hash) is None
