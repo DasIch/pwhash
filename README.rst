@@ -6,7 +6,9 @@ pwhash
 
 
 pwhash is a password hashing library, relying on well known and trusted implementations
-of cryptographic hashing functions, making password hashing as simple as::
+of cryptographic hashing functions, making password hashing as simple as:
+
+.. code:: python
 
    from pwhash import PasswordHasher
 
