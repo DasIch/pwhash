@@ -9,6 +9,7 @@
 from __future__ import print_function
 import sys
 import json
+import codecs
 import textwrap
 
 from docopt import docopt
@@ -142,7 +143,7 @@ class ConfigCLI(object):
             "duration": duration
         }
 
-        with open(arguments["--out"], "wb") as config_file:
+        with codecs.open(arguments["--out"], "w", encoding="utf-8") as config_file:
             json.dump(config, config_file, indent=4)
 
         self.info(u"\n%r created!" % arguments["--out"])
@@ -157,7 +158,7 @@ class ConfigCLI(object):
         Compiles an application config into a deployment config. This should be
         done on the machine on which the application is being deployed.
         """
-        with open(arguments["<application-config>"], "rb") as config_file:
+        with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
             application_config = json.load(config_file)
 
         if application_config["application_version"] < APPLICATION_VERSION:
@@ -207,7 +208,7 @@ class ConfigCLI(object):
                     "salt_length": hashers.DEFAULT_SALT_LENGTH
                 }
 
-        with open(arguments["--out"], "wb") as config_file:
+        with codecs.open(arguments["--out"], "w", encoding="utf-8") as config_file:
             json.dump(config, config_file, indent=4)
 
         self.info(u"%r created!" % arguments["--out"])
@@ -219,7 +220,7 @@ class ConfigCLI(object):
         Helps you upgrade the application config without having to redo
         everything.
         """
-        with open(arguments["<application-config>"], "rb") as config_file:
+        with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
             config = json.load(config_file)
 
         if config["application_version"] == APPLICATION_VERSION:
@@ -227,7 +228,7 @@ class ConfigCLI(object):
         else:
             self.fail(u"invalid application config")
 
-        with open(arguments["<application-config>"], "wb") as config_file:
+        with codecs.open(arguments["<application-config>"], "w", encoding="utf-8") as config_file:
             json.dump(config, config_file, indent=4)
 
 
