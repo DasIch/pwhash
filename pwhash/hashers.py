@@ -112,7 +112,7 @@ class Hasher(object):
 
     def verify(self, password, formatted_hash):
         """
-        Returns `True` if `hash` was created using `password`.
+        Returns `True` if `formatted_hash` was created using `password`.
         """
         if isinstance(password, text_type):
             password = password.encode("utf-8")
@@ -586,9 +586,16 @@ class PasswordHasher(UpgradeableMixin):
         return self.hashers[bytes_to_native(formatted_hash.split(b"$", 1)[0])]
 
     def verify(self, password, formatted_hash):
+        """
+        Returns `True` if `formatted_hash` was created from `password`.
+        """
         return self.get_hasher(formatted_hash).verify(password, formatted_hash)
 
     def upgrade(self, password, formatted_hash):
+        """
+        Returns a new formatted hash if `formatted_hash` was created using an
+        outdated hash function or parameters and `None` if it wasn't.
+        """
         hasher = self.get_hasher(formatted_hash)
         if hasher.name != self.preferred_hasher.name:
             return self.create(password)
