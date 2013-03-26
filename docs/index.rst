@@ -9,8 +9,8 @@ on the fly.::
    from pwhash import PasswordHasher
 
    pwhasher = PasswordHasher.from_config(config)
-   hash = pwhasher.create(b"password")
-   verified, new_hash = pwhasher.verify_and_upgrade(b"password", hash)
+   hash = pwhasher.create(u"password")
+   verified, new_hash = pwhasher.verify_and_upgrade(u"password", hash)
    if verified:
        print(u"Valid Password")
        if new_hash is not None:
