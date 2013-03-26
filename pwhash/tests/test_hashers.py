@@ -120,18 +120,18 @@ def test_password_hasher(recwarn):
 
     config = {
         "hashers": {
-            b"pbkdf2": {
+            "pbkdf2": {
                 "rounds": 1,
                 "method": "hmac-sha1",
                 "salt_length": 16
             },
-            b"bcrypt": {
+            "bcrypt": {
                 "cost": 12
             },
         }
     }
     for name, hasher, in ALL_HASHERS.items():
-        if name.startswith(b"hmac") or name.startswith(b"salted"):
+        if name.startswith("hmac") or name.startswith("salted"):
             config[name] = {"salt_length": 16}
     pw_hasher = PasswordHasher.from_config(config)
     hash = pw_hasher.create(b"password")

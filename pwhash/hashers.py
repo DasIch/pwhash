@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
+import sys
 import hmac
 import json
 import inspect
@@ -47,6 +48,20 @@ except NameError:
     text_type = str
 
 
+if sys.version_info >= (3, 0):
+    def native_to_bytes(native):
+        return native.encode("ascii")
+
+    def bytes_to_native(bytes):
+        return bytes.decode("ascii")
+else:
+    def native_to_bytes(native):
+        return native
+
+    def bytes_to_native(bytes):
+        return bytes
+
+
 def generate_salt(salt_length):
     return os.urandom(salt_length)
 
@@ -74,6 +89,7 @@ class Hasher(object):
         if not b"$" in formatted_hash:
             raise ValueError("name missing: %r" % formatted_hash)
         name, hash = formatted_hash.split(b"$", 1)
+        name = bytes_to_native(name)
         if name != self.name:
             raise ValueError("expected %r hash, got %r" % (self.name, name))
         return hash
@@ -133,7 +149,7 @@ class BCryptHasher(UpgradeableHasher):
     """
     A hasher that uses bcrypt.
     """
-    name = b"bcrypt"
+    name = "bcrypt"
 
     def __init__(self, cost):
         self.cost = cost
@@ -148,7 +164,7 @@ class BCryptHasher(UpgradeableHasher):
 
     def format(self, context):
         return b"$".join([
-            context["name"],
+            native_to_bytes(context["name"]),
             str(context["cost"]).encode("ascii"),
             context["hash"]
         ])
@@ -180,7 +196,7 @@ class PBKDF2Hasher(UpgradeableHasher):
     """
     A hasher that uses PBKDF2.
     """
-    name = b"pbkdf2"
+    name = "pbkdf2"
 
     def __init__(self, rounds, method="hmac-sha1", salt_length=DEFAULT_SALT_LENGTH):
         self.rounds = rounds
@@ -210,7 +226,7 @@ class PBKDF2Hasher(UpgradeableHasher):
 
     def format(self, context):
         return b"$".join([
-            context["name"],
+            native_to_bytes(context["name"]),
             context["method"].encode("ascii"),
             str(context["rounds"]).encode("ascii"),
             hexlify(context["salt"]),
@@ -242,13 +258,13 @@ class PlainHasher(Hasher):
     """
     A hasher that uses a plain password as "hash".
     """
-    name = b"plain"
+    name = "plain"
 
     def _create_from_bytes(self, password):
         return self.format({"name": self.name, "hash": password})
 
     def format(self, context):
-        return context["name"] + b"$" + context["hash"]
+        return native_to_bytes(context["name"]) + b"$" + context["hash"]
 
 
 class DigestHasher(Hasher):
@@ -261,7 +277,7 @@ class DigestHasher(Hasher):
 
     def format(self, context):
         return b"$".join([
-            context["name"],
+            native_to_bytes(context["name"]),
             hexlify(context["hash"])
         ])
 
@@ -270,7 +286,7 @@ class MD5Hasher(DigestHasher):
     """
     A hasher that used MD5.
     """
-    name = b"md5"
+    name = "md5"
     digest = hashlib.md5
 
 
@@ -278,7 +294,7 @@ class SHA1Hasher(DigestHasher):
     """
     A hasher that used SHA1.
     """
-    name = b"sha1"
+    name = "sha1"
     digest = hashlib.sha1
 
 
@@ -286,7 +302,7 @@ class SHA224Hasher(DigestHasher):
     """
     A hasher that uses SHA224.
     """
-    name = b"sha224"
+    name = "sha224"
     digest = hashlib.sha224
 
 
@@ -294,7 +310,7 @@ class SHA256Hasher(DigestHasher):
     """
     A hasher that uses SHA256.
     """
-    name = b"sha256"
+    name = "sha256"
     digest = hashlib.sha256
 
 
@@ -302,7 +318,7 @@ class SHA384Hasher(DigestHasher):
     """
     A hasher that uses SHA384.
     """
-    name = b"sha384"
+    name = "sha384"
     digest = hashlib.sha384
 
 
@@ -310,7 +326,7 @@ class SHA512Hasher(DigestHasher):
     """
     A hasher that uses SHA512.
     """
-    name = b"sha512"
+    name = "sha512"
     digest = hashlib.sha512
 
 
@@ -333,7 +349,7 @@ class SaltedDigestHasher(UpgradeableHasher):
 
     def format(self, context):
         return b"$".join([
-            context["name"],
+            native_to_bytes(context["name"]),
             hexlify(context["salt"]),
             hexlify(context["hash"])
         ])
@@ -358,7 +374,7 @@ class SaltedMD5Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and MD5.
     """
-    name = b"salted-md5"
+    name = "salted-md5"
     digest = hashlib.md5
 
 
@@ -366,7 +382,7 @@ class SaltedSHA1Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and SHA1.
     """
-    name = b"salted-sha1"
+    name = "salted-sha1"
     digest = hashlib.sha1
 
 
@@ -374,7 +390,7 @@ class SaltedSHA224Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and SHA224.
     """
-    name = b"salted-sha224"
+    name = "salted-sha224"
     digest = hashlib.sha224
 
 
@@ -382,7 +398,7 @@ class SaltedSHA256Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and SHA256.
     """
-    name = b"salted-sha256"
+    name = "salted-sha256"
     digest = hashlib.sha256
 
 
@@ -390,7 +406,7 @@ class SaltedSHA384Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and SHA384.
     """
-    name = b"salted-sha384"
+    name = "salted-sha384"
     digest = hashlib.sha384
 
 
@@ -398,7 +414,7 @@ class SaltedSHA512Hasher(SaltedDigestHasher):
     """
     A hasher that uses a salted password and SHA512.
     """
-    name = b"salted-sha512"
+    name = "salted-sha512"
     digest = hashlib.sha512
 
 
@@ -421,7 +437,7 @@ class HMACHasher(UpgradeableHasher):
 
     def format(self, context):
         return b"$".join([
-            context["name"],
+            native_to_bytes(context["name"]),
             hexlify(context["salt"]),
             hexlify(context["hash"])
         ])
@@ -445,7 +461,7 @@ class HMACMD5(HMACHasher):
     """
     A hasher that uses HMAC with a salt and MD5.
     """
-    name = b"hmac-md5"
+    name = "hmac-md5"
     digest = hashlib.md5
 
 
@@ -453,7 +469,7 @@ class HMACSHA1(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA1.
     """
-    name = b"hmac-sha1"
+    name = "hmac-sha1"
     digest = hashlib.sha1
 
 
@@ -461,7 +477,7 @@ class HMACSHA224(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA224.
     """
-    name = b"hmac-sha224"
+    name = "hmac-sha224"
     digest = hashlib.sha224
 
 
@@ -469,7 +485,7 @@ class HMACSHA256(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA256.
     """
-    name = b"hmac-sha256"
+    name = "hmac-sha256"
     digest = hashlib.sha256
 
 
@@ -477,7 +493,7 @@ class HMACSHA384(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA384.
     """
-    name = b"hmac-sha384"
+    name = "hmac-sha384"
     digest = hashlib.sha384
 
 
@@ -485,7 +501,7 @@ class HMACSHA512(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA512.
     """
-    name = b"hmac-sha512"
+    name = "hmac-sha512"
     digest = hashlib.sha512
 
 
@@ -562,7 +578,7 @@ class PasswordHasher(UpgradeableMixin):
         return self.preferred_hasher.create(password)
 
     def get_hasher(self, formatted_hash):
-        return self.hashers[formatted_hash.split(b"$", 1)[0]]
+        return self.hashers[bytes_to_native(formatted_hash.split(b"$", 1)[0])]
 
     def verify(self, password, formatted_hash):
         return self.get_hasher(formatted_hash).verify(password, formatted_hash)

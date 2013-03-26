@@ -177,7 +177,7 @@ class ConfigCLI(object):
                 "deployment": DEPLOYMENT_VERSION
             },
             "hashers": {
-                b"pbkdf2": {
+                "pbkdf2": {
                     "rounds": determine_pbkdf2_rounds(
                         application_config["min_password_length"],
                         hashers.DEFAULT_SALT_LENGTH,
@@ -188,7 +188,7 @@ class ConfigCLI(object):
                     "method": pbkdf2_method,
                     "salt_length": hashers.DEFAULT_SALT_LENGTH
                 },
-                b"bcrypt": {
+                "bcrypt": {
                     "cost": 12
                 }
             }
@@ -203,7 +203,7 @@ class ConfigCLI(object):
         except RuntimeError:
             pass
         for name, hasher in hashers.ALL_HASHERS.items():
-            if name.startswith(b"salted") or name.startswith(b"hmac"):
+            if name.startswith("salted") or name.startswith("hmac"):
                 config["hashers"][name] = {
                     "salt_length": hashers.DEFAULT_SALT_LENGTH
                 }

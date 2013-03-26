@@ -1,2 +1,2 @@
 cffi
-pexpect
+pexpect-u
