@@ -54,6 +54,6 @@ which is available under a `CC BY 3.0`_ license and was inspired by the
 
 
 .. _Speak Up! Code of Conduct: http://speakup.io/coc.html
-.. _CC BY 3.0: http://creativecommons.org/license/by/3.0
+.. _CC BY 3.0: http://creativecommons.org/licenses/by/3.0
 .. _Fedora Project: http://fedoraproject.org/code-of-conduct
 .. _Python Mentorship Project: http://pythonmentors.com
