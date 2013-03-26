@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import math
+import random
 import warnings
 from functools import partial
 
@@ -17,6 +18,12 @@ from cffi import FFI
 import pkg_resources
 
 from pwhash.algorithms import pbkdf2
+
+
+def _generate_password(length):
+    return u"".join(
+        random.sample(u"abcdefghijklmnopqrstuvwxyz", length)
+    ).encode("ascii")
 
 
 
@@ -38,7 +45,7 @@ else:
         # We use random "passwords" and "salts" to prevent the interpreter from
         # performing optimizations that mess with the timings.
         arguments = [
-            (os.urandom(password_length), os.urandom(salt_length))
+            (_generate_password(password_length), os.urandom(salt_length))
             for _ in range(5)
         ]
         for password, salt in arguments:
@@ -166,7 +173,7 @@ def determine_bcrypt_cost(password_length, duration):
     while True:
         start = time.clock()
         bcrypt.hashpw(
-            os.urandom(password_length),
+            _generate_password(password_length),
             bcrypt.gensalt(round_measure)
         )
         end = time.clock()

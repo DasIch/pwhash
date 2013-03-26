@@ -100,6 +100,11 @@ class Hasher(object):
         """
         if isinstance(password, text_type):
             password = password.encode("utf-8")
+        # py-bcrypt does not allow \0 in passwords. That is a very annoying
+        # restriction however at the moment there is no other implementation,
+        # that is maintained and trustworthy.
+        if b"\0" in password:
+            raise ValueError("\\0 not allowed in passwords")
         return self._create_from_bytes(password)
 
     def _create_from_bytes(self, password):
