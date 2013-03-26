@@ -44,7 +44,7 @@ later what that is) passwords. You can create a hash using
 
 In order to verify a password against that hash use::
 
-  pwhash.verify_and_upgrade(u"password", hash)
+  pwhasher.verify_and_upgrade(u"password", hash)
 
 This will return a tuple ``(is_correct_password, upgraded_hash)``,
 `is_correct_password` is `True` if ``u"password"`` is actually the correct
