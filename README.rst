@@ -4,12 +4,20 @@ pwhash
 .. image:: https://travis-ci.org/DasIch/pwhash.png?branch=master
    :target: https://travis-ci.org/DasIch/pwhash
 
-pwhash is a library in an early stage of development, aiming to provide secure
-and easy to use password hashing, relying on OpenSSL_ and CommonCrypto_
-implementations of password hashing algorithms. Eventually users should be able
-to use pwhash without having to be familiar with cryptography and state of the
-art password hashing algorithms, without sacrificing security.
 
+pwhash is a password hashing library, relying on well known and trusted implementations
+of cryptographic hashing functions, making password hashing as simple as::
 
-.. _OpenSSL: http://www.openssl.org/
-.. _CommonCrypto: https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/Common%20Crypto.3cc.html
+   from pwhash import PasswordHasher
+
+   pwhasher = PasswordHasher.from_config_file("pwhashc.json")
+
+   hash = pwhash.create(u"password")
+   verified, new_hash = pwhasher.verify_and_upgrade(u"password", hash)
+   if verified:
+       authenticate()
+       if new_hash is not None:
+           save_new_safer_hash(new_hash)
+
+There is no reason to make password hashing more difficult or upgrading your
+hash function less seamless.
