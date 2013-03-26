@@ -22,6 +22,11 @@ DEPLOYMENT_VERSION = 1
 
 _missing = object()
 
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 
 def int_input(prompt, fail_message, default=_missing):
     while True:
