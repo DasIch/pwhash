@@ -5,64 +5,64 @@ pwhash.hashers
 
 
 .. autoclass:: BCryptHasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: PBKDF2Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACSHA512
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACSHA384
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACSHA256
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACSHA224
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACSHA1
-   :members:
+   :inherited-members:
 
 .. autoclass:: HMACMD5
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedSHA512Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedSHA384Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedSHA256Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedSHA224Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedSHA1Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SaltedMD5Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SHA512Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SHA384Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SHA256Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SHA224Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: SHA1Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: MD5Hasher
-   :members:
+   :inherited-members:
 
 .. autoclass:: PlainHasher
-   :members:
+   :inherited-members:
