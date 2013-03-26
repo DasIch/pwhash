@@ -273,11 +273,11 @@ class PlainHasher(Hasher):
 
 
 class DigestHasher(Hasher):
-    digest = None
+    _digest = None
 
     def _create_from_bytes(self, password):
         return self.format(
-            {"name": self.name, "hash": self.digest(password).digest()}
+            {"name": self.name, "hash": self._digest(password).digest()}
         )
 
     def format(self, context):
@@ -292,7 +292,7 @@ class MD5Hasher(DigestHasher):
     A hasher that used MD5.
     """
     name = "md5"
-    digest = hashlib.md5
+    _digest = hashlib.md5
 
 
 class SHA1Hasher(DigestHasher):
@@ -300,7 +300,7 @@ class SHA1Hasher(DigestHasher):
     A hasher that used SHA1.
     """
     name = "sha1"
-    digest = hashlib.sha1
+    _digest = hashlib.sha1
 
 
 class SHA224Hasher(DigestHasher):
@@ -308,7 +308,7 @@ class SHA224Hasher(DigestHasher):
     A hasher that uses SHA224.
     """
     name = "sha224"
-    digest = hashlib.sha224
+    _digest = hashlib.sha224
 
 
 class SHA256Hasher(DigestHasher):
@@ -316,7 +316,7 @@ class SHA256Hasher(DigestHasher):
     A hasher that uses SHA256.
     """
     name = "sha256"
-    digest = hashlib.sha256
+    _digest = hashlib.sha256
 
 
 class SHA384Hasher(DigestHasher):
@@ -324,7 +324,7 @@ class SHA384Hasher(DigestHasher):
     A hasher that uses SHA384.
     """
     name = "sha384"
-    digest = hashlib.sha384
+    _digest = hashlib.sha384
 
 
 class SHA512Hasher(DigestHasher):
@@ -332,14 +332,14 @@ class SHA512Hasher(DigestHasher):
     A hasher that uses SHA512.
     """
     name = "sha512"
-    digest = hashlib.sha512
+    _digest = hashlib.sha512
 
 
 _SaltedDigestHash = namedtuple("_SaltedDigestHash", ["salt", "hash"])
 
 
 class SaltedDigestHasher(UpgradeableHasher):
-    digest = None
+    _digest = None
 
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
         self.salt_length = salt_length
@@ -349,7 +349,7 @@ class SaltedDigestHasher(UpgradeableHasher):
         return self.format({
             "name": self.name,
             "salt": salt,
-            "hash": self.digest(salt + password).digest()
+            "hash": self._digest(salt + password).digest()
         })
 
     def format(self, context):
@@ -366,7 +366,7 @@ class SaltedDigestHasher(UpgradeableHasher):
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
-        hash = hexlify(self.digest(parsed.salt + password).digest())
+        hash = hexlify(self._digest(parsed.salt + password).digest())
         return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, formatted_hash):
@@ -380,7 +380,7 @@ class SaltedMD5Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and MD5.
     """
     name = "salted-md5"
-    digest = hashlib.md5
+    _digest = hashlib.md5
 
 
 class SaltedSHA1Hasher(SaltedDigestHasher):
@@ -388,7 +388,7 @@ class SaltedSHA1Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and SHA1.
     """
     name = "salted-sha1"
-    digest = hashlib.sha1
+    _digest = hashlib.sha1
 
 
 class SaltedSHA224Hasher(SaltedDigestHasher):
@@ -396,7 +396,7 @@ class SaltedSHA224Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and SHA224.
     """
     name = "salted-sha224"
-    digest = hashlib.sha224
+    _digest = hashlib.sha224
 
 
 class SaltedSHA256Hasher(SaltedDigestHasher):
@@ -404,7 +404,7 @@ class SaltedSHA256Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and SHA256.
     """
     name = "salted-sha256"
-    digest = hashlib.sha256
+    _digest = hashlib.sha256
 
 
 class SaltedSHA384Hasher(SaltedDigestHasher):
@@ -412,7 +412,7 @@ class SaltedSHA384Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and SHA384.
     """
     name = "salted-sha384"
-    digest = hashlib.sha384
+    _digest = hashlib.sha384
 
 
 class SaltedSHA512Hasher(SaltedDigestHasher):
@@ -420,14 +420,14 @@ class SaltedSHA512Hasher(SaltedDigestHasher):
     A hasher that uses a salted password and SHA512.
     """
     name = "salted-sha512"
-    digest = hashlib.sha512
+    _digest = hashlib.sha512
 
 
 _HMACHash = namedtuple("_HMACHash", ["salt", "hash"])
 
 
 class HMACHasher(UpgradeableHasher):
-    digest = None
+    _digest = None
 
     def __init__(self, salt_length=DEFAULT_SALT_LENGTH):
         self.salt_length = salt_length
@@ -437,7 +437,7 @@ class HMACHasher(UpgradeableHasher):
         return self.format({
             "name": self.name,
             "salt": salt,
-            "hash": hmac.new(salt, password, self.digest).digest()
+            "hash": hmac.new(salt, password, self._digest).digest()
         })
 
     def format(self, context):
@@ -453,7 +453,7 @@ class HMACHasher(UpgradeableHasher):
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
-        hash = hexlify(hmac.new(parsed.salt, password, self.digest).digest())
+        hash = hexlify(hmac.new(parsed.salt, password, self._digest).digest())
         return constant_time_equal(hash, parsed.hash)
 
     def upgrade(self, password, formatted_hash):
@@ -467,7 +467,7 @@ class HMACMD5(HMACHasher):
     A hasher that uses HMAC with a salt and MD5.
     """
     name = "hmac-md5"
-    digest = hashlib.md5
+    _digest = hashlib.md5
 
 
 class HMACSHA1(HMACHasher):
@@ -475,7 +475,7 @@ class HMACSHA1(HMACHasher):
     A hasher that uses HMAC with a salt and SHA1.
     """
     name = "hmac-sha1"
-    digest = hashlib.sha1
+    _digest = hashlib.sha1
 
 
 class HMACSHA224(HMACHasher):
@@ -483,7 +483,7 @@ class HMACSHA224(HMACHasher):
     A hasher that uses HMAC with a salt and SHA224.
     """
     name = "hmac-sha224"
-    digest = hashlib.sha224
+    _digest = hashlib.sha224
 
 
 class HMACSHA256(HMACHasher):
@@ -491,7 +491,7 @@ class HMACSHA256(HMACHasher):
     A hasher that uses HMAC with a salt and SHA256.
     """
     name = "hmac-sha256"
-    digest = hashlib.sha256
+    _digest = hashlib.sha256
 
 
 class HMACSHA384(HMACHasher):
@@ -499,7 +499,7 @@ class HMACSHA384(HMACHasher):
     A hasher that uses HMAC with a salt and SHA384.
     """
     name = "hmac-sha384"
-    digest = hashlib.sha384
+    _digest = hashlib.sha384
 
 
 class HMACSHA512(HMACHasher):
@@ -507,7 +507,7 @@ class HMACSHA512(HMACHasher):
     A hasher that uses HMAC with a salt and SHA512.
     """
     name = "hmac-sha512"
-    digest = hashlib.sha512
+    _digest = hashlib.sha512
 
 
 ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in filter(None, [
