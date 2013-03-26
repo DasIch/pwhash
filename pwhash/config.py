@@ -112,6 +112,8 @@ class ConfigCLI(object):
         """
         usage: pwhash-config create [-o <file>]
 
+        Creates an application config file.
+
         options:
           -o, --out=<file>  Configuration file [default: pwhash.json]
         """
@@ -152,11 +154,12 @@ class ConfigCLI(object):
         """
         usage: pwhash-config compile [-o <file>] <application-config>
 
+        Compiles an application config into a deployment config. This should be
+        done on the machine on which the application is being deployed and
+        repeated everytime that machine is upgraded.
+
         options:
           -o, --out=<file>  Configuration file [default: pwhashc.json]
-
-        Compiles an application config into a deployment config. This should be
-        done on the machine on which the application is being deployed.
         """
         with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
             application_config = json.load(config_file)
@@ -217,8 +220,8 @@ class ConfigCLI(object):
         """
         usage: pwhash-config upgrade <application-config>
 
-        Helps you upgrade the application config without having to redo
-        everything.
+        Instead of re-creating the application config using `pwhash-config create`,
+        this will help you to incrementally upgrade it to the newest version.
         """
         with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
             config = json.load(config_file)
