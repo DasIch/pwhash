@@ -147,6 +147,12 @@ def test_password_hasher(recwarn):
     warning = recwarn.pop(ConfigWarning)
     assert "pbkdf2" in str(warning.message)
 
+    pw_hasher = PasswordHasher.from_config_file(
+        "pwhashc.json",
+        relative_to_importable=__name__
+    )
+    assert pw_hasher.verify(u"password", pw_hasher.create(u"password"))
+
 
 @pytest.mark.parametrize("hasher_cls", [
     MD5Hasher, SHA1Hasher, SHA224Hasher, SHA256Hasher, SHA384Hasher,

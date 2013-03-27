@@ -11,6 +11,7 @@ import sys
 import time
 import math
 import random
+import pkgutil
 import warnings
 from functools import partial
 
@@ -190,3 +191,34 @@ def determine_bcrypt_cost(password_length, duration):
             previous_round_measure = round_measure
             round_measure -= 1
     return round_measure
+
+
+def get_root_path(import_name):
+    """
+    Returns the path of the package or the directory in which the module is
+    contained that `import_name` refers to. If the path cannot be determined
+    `None` is returned.
+
+    If the module or package with the name defined by `import_name` cannot be
+    imported an :exc:`ImportError` may be raised.
+    """
+    filepath = None
+
+    # If it's imported and has a __file__ attribute use that.
+    module = sys.modules.get(import_name)
+    if module is not None and hasattr(module, "__file__"):
+        filepath = module.__file__
+
+    # Attempt to get the path from responsible loader.
+    if filepath is None:
+        loader = pkgutil.get_loader(import_name)
+        if loader is not None:
+            filepath = loader.get_filename(import_name)
+
+    # Let's try to import it.
+    if filepath is None:
+        __import__(import_name)
+        filepath = sys.modules[import_name].__file__
+
+    if filepath is not None:
+        return os.path.dirname(os.path.abspath(filepath))

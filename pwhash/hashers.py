@@ -17,7 +17,9 @@ from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
-from pwhash.utils import constant_time_equal, classproperty, _import_bcrypt
+from pwhash.utils import (
+    constant_time_equal, classproperty, _import_bcrypt, get_root_path
+)
 
 bcrypt = _import_bcrypt()
 
@@ -557,12 +559,24 @@ class PasswordHasher(UpgradeableMixin):
         return cls(hashers)
 
     @classmethod
-    def from_config_file(cls, filepath):
+    def from_config_file(cls, filepath, relative_to_importable=None):
         """
         Like :meth:`from_config` but loads the config from a json file at
         `filepath` first.
+
+        If `relative_to_importable` is given loads the config from a file
+        relative to a directory that is either the directory of a package or
+        the directory in which a module is contained, depending on whether the
+        name passed as `relative_to_importable` refers to a package or module.
         """
         from pwhash import config
+        if relative_to_importable is not None:
+            importable_dir = get_root_path(relative_to_importable)
+            if importable_dir is None:
+                raise ValueError(
+                    "cannot determine path for importable: %r" % relative_to_importable
+                )
+            filepath = os.path.join(importable_dir, filepath)
         return cls.from_config(config.load(filepath))
 
     def __init__(self, hashers):

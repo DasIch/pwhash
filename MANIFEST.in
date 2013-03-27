@@ -1,4 +1,6 @@
 include README.rst LICENSE.rst
 
+include pwhash/tests/pwhashc.json
+
 include pwhash/tests/package/MANIFEST.in
 include pwhash/tests/package/package/pwhash.json
