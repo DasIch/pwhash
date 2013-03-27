@@ -29,24 +29,12 @@ DEPLOYMENT_VERSION = 1
 _missing = object()
 
 
-def int_input(prompt, fail_message, default=_missing):
+def typed_input(type, prompt, fail_message, default=_missing):
     while True:
         raw = raw_input(prompt)
         if raw or default is _missing:
             try:
-                return int(raw)
-            except ValueError:
-                print(fail_message % raw)
-        else:
-            return default
-
-
-def float_input(prompt, fail_message, default=_missing):
-    while True:
-        raw = raw_input(prompt)
-        if raw or default is _missing:
-            try:
-                return float(raw)
+                return type(raw)
             except ValueError:
                 print(fail_message % raw)
         else:
@@ -182,7 +170,8 @@ class ConfigCLI(object):
           -o, --out=<file>  Configuration file [default: pwhash.json]
         """
         while True:
-            min_password_length = int_input(
+            min_password_length = typed_input(
+                int,
                 u"What is the minimum password length? ",
                 u"%r is not an integer"
             )
@@ -191,7 +180,8 @@ class ConfigCLI(object):
             print(u"Passwords must be at least one character long")
 
         while True:
-            duration = float_input(
+            duration = typed_input(
+                float,
                 u"How long should hashing take in seconds? ",
                 "%r is not a float"
             )
