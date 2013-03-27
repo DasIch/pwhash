@@ -7,8 +7,6 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
-from shutil import rmtree
-from tempfile import mkdtemp
 from contextlib import contextmanager
 
 import pytest
@@ -16,15 +14,9 @@ import pexpect
 
 import pwhash
 from pwhash import config
+from pwhash.tests.utils import create_temp_dir
 
 
-@contextmanager
-def create_temp_dir():
-    temp_dir = mkdtemp()
-    try:
-        yield temp_dir
-    finally:
-        rmtree(temp_dir)
 
 
 class TestConfigCLI(object):

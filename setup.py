@@ -31,7 +31,12 @@ setup(
     author_email="dasdasich@gmail.com",
     description="simple safe password hashing",
     url="https://github.com/DasIch/pwhash",
-    packages=["pwhash", "pwhash.tests"],
+    packages=[
+        "pwhash",
+        "pwhash.tests",
+        "pwhash.tests.package"
+    ],
+    include_package_data=True,
     entry_points = {
         "console_scripts": [
             "pwhash-config = pwhash.config:run"

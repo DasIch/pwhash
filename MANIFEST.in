@@ -1,2 +1,4 @@
 include README.rst LICENSE.rst
-include pwhash/timingsafe_bcmp.*
+
+include pwhash/tests/package/MANIFEST.in
+include pwhash/tests/package/package/pwhash.json

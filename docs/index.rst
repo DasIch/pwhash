@@ -31,6 +31,7 @@ API
 
    api/pwhash.rst
    api/hashers.rst
+   api/packaging.rst
 
 
 Additional Notes
