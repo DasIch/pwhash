@@ -15,7 +15,9 @@ import textwrap
 from docopt import docopt
 
 from pwhash import hashers, __version__
-from pwhash.utils import determine_pbkdf2_rounds, determine_bcrypt_cost
+from pwhash.utils import (
+    determine_pbkdf2_rounds, determine_bcrypt_cost, raw_input
+)
 
 
 #: Current application configuration version.
@@ -25,11 +27,6 @@ APPLICATION_VERSION = 1
 DEPLOYMENT_VERSION = 1
 
 _missing = object()
-
-try:
-    raw_input
-except NameError:
-    raw_input = input
 
 
 def int_input(prompt, fail_message, default=_missing):

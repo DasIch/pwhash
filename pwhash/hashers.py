@@ -18,7 +18,8 @@ from collections import OrderedDict, namedtuple
 
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import (
-    constant_time_equal, classproperty, _import_bcrypt, get_root_path
+    constant_time_equal, classproperty, _import_bcrypt, get_root_path,
+    text_type, native_to_bytes, bytes_to_native
 )
 
 bcrypt = _import_bcrypt()
@@ -42,26 +43,6 @@ RECOMMENDED_MIN_SALT_LENGTH = 16 # 128 bit
 #: recommendation is more than 3 years old, we use twice the (minimum)
 #: recommended length.
 DEFAULT_SALT_LENGTH = RECOMMENDED_MIN_SALT_LENGTH * 2
-
-
-try:
-    text_type = unicode
-except NameError:
-    text_type = str
-
-
-if sys.version_info >= (3, 0):
-    def native_to_bytes(native):
-        return native.encode("ascii")
-
-    def bytes_to_native(bytes):
-        return bytes.decode("ascii")
-else:
-    def native_to_bytes(native):
-        return native
-
-    def bytes_to_native(bytes):
-        return bytes
 
 
 def generate_salt(salt_length):

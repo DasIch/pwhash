@@ -21,6 +21,18 @@ import pkg_resources
 from pwhash.algorithms import pbkdf2
 
 
+try:
+    raw_input = raw_input # assignment is necessary to make it importable
+except NameError: # Python 3.x
+    raw_input = input
+
+
+try:
+    text_type = unicode
+except NameError: # Python 3.x
+    text_type = str
+
+
 def _generate_password(length):
     return u"".join(
         random.sample(u"abcdefghijklmnopqrstuvwxyz", length)
@@ -222,3 +234,17 @@ def get_root_path(import_name):
 
     if filepath is not None:
         return os.path.dirname(os.path.abspath(filepath))
+
+
+if sys.version_info >= (3, 0):
+    def native_to_bytes(native):
+        return native.encode("ascii")
+
+    def bytes_to_native(bytes):
+        return bytes.decode("ascii")
+else:
+    def native_to_bytes(native):
+        return native
+
+    def bytes_to_native(bytes):
+        return bytes
