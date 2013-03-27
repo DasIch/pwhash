@@ -53,6 +53,47 @@ def float_input(prompt, fail_message, default=_missing):
             return default
 
 
+def compile(application_config):
+    # If you change `config` and nobody documented incrementing
+    # DEPLOYMENT_VERSION in CHANGELOG.rst, increment DEPLOYMENT_VERSION and
+    # document that in CHANGELOG.rst.
+    pbkdf2_method = "hmac-sha1"
+    config = {
+        "version": {
+            "application": application_config["application_version"],
+            "deployment": DEPLOYMENT_VERSION
+        },
+        "hashers": {
+            "pbkdf2": {
+                "rounds": determine_pbkdf2_rounds(
+                    application_config["min_password_length"],
+                    hashers.DEFAULT_SALT_LENGTH,
+                    hashers.DIGEST_SIZES[pbkdf2_method],
+                    pbkdf2_method,
+                    application_config["duration"]
+                ),
+                "method": pbkdf2_method,
+                "salt_length": hashers.DEFAULT_SALT_LENGTH
+            }
+        }
+    }
+    try:
+        config["hashers"]["bcrypt"] = {
+            "cost": determine_bcrypt_cost(
+                application_config["min_password_length"],
+                application_config["duration"]
+            )
+        }
+    except RuntimeError:
+        pass
+    for name, hasher in hashers.ALL_HASHERS.items():
+        if name.startswith("salted") or name.startswith("hmac"):
+            config["hashers"][name] = {
+                "salt_length": hashers.DEFAULT_SALT_LENGTH
+            }
+    return config
+
+
 class ConfigCLI(object):
     def __init__(self):
         self.commands = {
@@ -169,47 +210,7 @@ class ConfigCLI(object):
         elif application_config["application_version"] > APPLICATION_VERSION:
             self.fail(u"Configuration incompatible; upgrade pwhash")
 
-        # If you change `config` and nobody documented incrementing
-        # DEPLOYMENT_VERSION in CHANGELOG.rst, increment DEPLOYMENT_VERSION and
-        # document that in CHANGELOG.rst.
-
-        pbkdf2_method = "hmac-sha1"
-        config = {
-            "version": {
-                "application": application_config["application_version"],
-                "deployment": DEPLOYMENT_VERSION
-            },
-            "hashers": {
-                "pbkdf2": {
-                    "rounds": determine_pbkdf2_rounds(
-                        application_config["min_password_length"],
-                        hashers.DEFAULT_SALT_LENGTH,
-                        hashers.DIGEST_SIZES[pbkdf2_method],
-                        pbkdf2_method,
-                        application_config["duration"]
-                    ),
-                    "method": pbkdf2_method,
-                    "salt_length": hashers.DEFAULT_SALT_LENGTH
-                },
-                "bcrypt": {
-                    "cost": 12
-                }
-            }
-        }
-        try:
-            config["hashers"]["bcrypt"] = {
-                "cost": determine_bcrypt_cost(
-                    application_config["min_password_length"],
-                    application_config["duration"]
-                )
-            }
-        except RuntimeError:
-            pass
-        for name, hasher in hashers.ALL_HASHERS.items():
-            if name.startswith("salted") or name.startswith("hmac"):
-                config["hashers"][name] = {
-                    "salt_length": hashers.DEFAULT_SALT_LENGTH
-                }
+        config = compile(application_config)
 
         with codecs.open(arguments["--out"], "w", encoding="utf-8") as config_file:
             json.dump(config, config_file, indent=4)
