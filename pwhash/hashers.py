@@ -562,8 +562,8 @@ class PasswordHasher(UpgradeableMixin):
         Like :meth:`from_config` but loads the config from a json file at
         `filepath` first.
         """
-        with open(filepath, "rb") as config_file:
-            return cls.from_config(json.load(config_file))
+        from pwhash import config
+        return cls.from_config(config.load(filepath))
 
     def __init__(self, hashers):
         self.hashers = OrderedDict((hasher.name, hasher) for hasher in hashers)

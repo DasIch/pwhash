@@ -94,6 +94,16 @@ def compile(application_config):
     return config
 
 
+def load(path):
+    with codecs.open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def dump(path, config):
+    with codecs.open(path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4)
+
+
 class ConfigCLI(object):
     def __init__(self):
         self.commands = {
@@ -186,9 +196,7 @@ class ConfigCLI(object):
             "duration": duration
         }
 
-        with codecs.open(arguments["--out"], "w", encoding="utf-8") as config_file:
-            json.dump(config, config_file, indent=4)
-
+        dump(arguments["--out"], config)
         self.info(u"\n%r created!" % arguments["--out"])
 
     def compile(self, arguments):
@@ -202,19 +210,14 @@ class ConfigCLI(object):
         options:
           -o, --out=<file>  Configuration file [default: pwhashc.json]
         """
-        with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
-            application_config = json.load(config_file)
+        application_config = load(arguments["<application-config>"])
 
         if application_config["application_version"] < APPLICATION_VERSION:
             self.fail(u"Configuration needs to be upgraded.")
         elif application_config["application_version"] > APPLICATION_VERSION:
             self.fail(u"Configuration incompatible; upgrade pwhash")
 
-        config = compile(application_config)
-
-        with codecs.open(arguments["--out"], "w", encoding="utf-8") as config_file:
-            json.dump(config, config_file, indent=4)
-
+        dump(arguments["--out"], compile(application_config))
         self.info(u"%r created!" % arguments["--out"])
 
     def upgrade(self, arguments):
@@ -224,16 +227,14 @@ class ConfigCLI(object):
         Instead of re-creating the application config using `pwhash-config create`,
         this will help you to incrementally upgrade it to the newest version.
         """
-        with codecs.open(arguments["<application-config>"], "r", encoding="utf-8") as config_file:
-            config = json.load(config_file)
+        config = load(arguments["<application-config>"])
 
         if config["application_version"] == APPLICATION_VERSION:
             self.info(u"application config already at most recent version")
         else:
             self.fail(u"invalid application config")
 
-        with codecs.open(arguments["<application-config>"], "w", encoding="utf-8") as config_file:
-            json.dump(config, config_file, indent=4)
+        dump(arguments["<application-config>"], config)
 
 
 run = ConfigCLI().run
