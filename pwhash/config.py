@@ -18,7 +18,10 @@ from pwhash import hashers, __version__
 from pwhash.utils import determine_pbkdf2_rounds, determine_bcrypt_cost
 
 
+#: Current application configuration version.
 APPLICATION_VERSION = 1
+
+#: Current deployment configuration version.
 DEPLOYMENT_VERSION = 1
 
 _missing = object()
@@ -54,9 +57,16 @@ def float_input(prompt, fail_message, default=_missing):
 
 
 def compile(application_config):
+    """
+    Compiles `application_config` and returns a deployment config, raises
+    :exc:`ValueError` if `application_config` is outdated or has been created
+    with a more recent incompatible version of pwhash.
+    """
     # If you change `config` and nobody documented incrementing
     # DEPLOYMENT_VERSION in CHANGELOG.rst, increment DEPLOYMENT_VERSION and
     # document that in CHANGELOG.rst.
+    if application_config["application_version"] != APPLICATION_VERSION:
+        raise ValueError("application_config outdated or pwhash outdated")
     pbkdf2_method = "hmac-sha1"
     config = {
         "version": {
@@ -95,11 +105,17 @@ def compile(application_config):
 
 
 def load(path):
+    """
+    Loads a pwhash configuration from the given `path` and returns it.
+    """
     with codecs.open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def dump(path, config):
+    """
+    Dumps the given pwhash `config` to the given `path`.
+    """
     with codecs.open(path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
 

@@ -30,6 +30,7 @@ API
 .. toctree::
 
    api/pwhash.rst
+   api/config.rst
    api/hashers.rst
    api/packaging.rst
 
