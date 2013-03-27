@@ -11,5 +11,5 @@ install:
   - pip install .
 script:
   - py.test
-  - sphinx-build -aEb linkcheck docs docs/_build
-  - sphinx-build -aEb doctest docs docs/_build
+  - sphinx-build -aEWb linkcheck docs docs/_build
+  - sphinx-build -aEWb doctest docs docs/_build
