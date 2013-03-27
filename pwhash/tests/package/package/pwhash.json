@@ -1,0 +1,5 @@
+{
+    "min_password_length": 8, 
+    "duration": 0.1, 
+    "application_version": 1
+}

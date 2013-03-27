@@ -6,6 +6,6 @@ Vagrantfile
 docs/_build/*
 build/
 *.so
-pwhash.json
-pwhashc.json
+^pwhash.json
+^pwhashc.json
 .DS_Store

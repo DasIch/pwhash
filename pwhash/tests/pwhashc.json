@@ -1,0 +1,52 @@
+{
+    "version": {
+        "application": 1, 
+        "deployment": 1
+    }, 
+    "hashers": {
+        "salted-sha1": {
+            "salt_length": 32
+        }, 
+        "hmac-sha512": {
+            "salt_length": 32
+        }, 
+        "salted-sha512": {
+            "salt_length": 32
+        }, 
+        "salted-sha224": {
+            "salt_length": 32
+        }, 
+        "pbkdf2": {
+            "salt_length": 32, 
+            "rounds": 97087, 
+            "method": "hmac-sha1"
+        }, 
+        "salted-md5": {
+            "salt_length": 32
+        }, 
+        "bcrypt": {
+            "cost": 11
+        }, 
+        "salted-sha384": {
+            "salt_length": 32
+        }, 
+        "hmac-sha224": {
+            "salt_length": 32
+        }, 
+        "hmac-sha256": {
+            "salt_length": 32
+        }, 
+        "hmac-md5": {
+            "salt_length": 32
+        }, 
+        "hmac-sha1": {
+            "salt_length": 32
+        }, 
+        "hmac-sha384": {
+            "salt_length": 32
+        }, 
+        "salted-sha256": {
+            "salt_length": 32
+        }
+    }
+}
