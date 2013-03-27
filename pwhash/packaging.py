@@ -10,7 +10,7 @@ import os
 import json
 import codecs
 from distutils import log
-from distutils.command.install import install as InstallBase
+from setuptools.command.install import install as InstallBase
 
 from pwhash import config
 

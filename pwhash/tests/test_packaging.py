@@ -12,6 +12,8 @@ import subprocess
 from shutil import rmtree
 from functools import partial
 
+import pytest
+
 from pwhash.tests.utils import create_temp_dir
 
 
@@ -31,22 +33,34 @@ def get_subdir(root, dirname):
                 return os.path.join(root, dir)
 
 
-def test_install():
+def install_setuppy(root):
+    returncode = subprocess.call(
+        [
+            sys.executable, os.path.join(TEST_PACKAGE_PATH, "setup.py"),
+            "install", "--root", root
+        ],
+        cwd=TEST_PACKAGE_PATH
+    )
+    assert returncode == 0
+    site_packages = get_subdir(root, "site-packages")
+    assert site_packages is not None
+    return site_packages
+
+def install_pip(root):
+    returncode = subprocess.call(
+        ["pip", "install", "--target", root, "."],
+        cwd=TEST_PACKAGE_PATH
+    )
+    assert returncode == 0
+    return root
+
+
+@pytest.mark.parametrize("install", [install_setuppy, install_pip])
+def test_install(install):
     try:
         with create_temp_dir() as root:
-            returncode = subprocess.call(
-                [
-                    sys.executable, os.path.join(TEST_PACKAGE_PATH, "setup.py"),
-                    "install",
-                    "--root", root
-                ],
-                cwd=TEST_PACKAGE_PATH
-            )
-            assert returncode == 0
-            site_packages = get_subdir(root, "site-packages")
-            assert site_packages is not None
             assert os.path.isfile(
-                os.path.join(site_packages, "package", "pwhashc.json")
+                os.path.join(install(root), "package", "pwhashc.json")
             )
     finally:
         for name in os.listdir(TEST_PACKAGE_PATH):
