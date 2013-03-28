@@ -1,6 +1,28 @@
 Contributing
 ============
 
+Contributions in any form are always welcome. If you think you have found a bug,
+you have an idea you think might improve things or even better you already have
+code and can make a pull request, do not hesistate to create an issue or make
+that pull request.
+
+Nevertheless there are a couple of things to be aware of:
+
+1. Be nice. We have a code-of-conduct_, please read and follow it.
+2. If you have found a bug or have an idea on how to improve things, chances
+   are someone else did as well; so please run a search on the issue tracker
+   if someone else had the same idea already, contribute to the discussion if
+   that makes sense, if you are the first create an issue.
+3. If you are contributing code, try to be consistent with the code you are
+   modifying, if in doubt follow :pep:`8`.
+4. If you are thinking of contributing a lot of code or making big changes, get
+   in contact before writing it. The more code you write and the more changes
+   you do, the bigger the chance of disagreement and it is very disappointing
+   for everyone if the code will not be merged. Let us prevent this early
+   through communication.
+
+.. _code-of-conduct:
+
 Code of Conduct
 ---------------
 
