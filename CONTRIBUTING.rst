@@ -8,7 +8,7 @@ that pull request.
 
 Nevertheless there are a couple of things to be aware of:
 
-1. Be nice. We have a code-of-conduct_, please read and follow it.
+1. Be nice. We have a :ref:`code-of-conduct`, please read and follow it.
 2. If you have found a bug or have an idea on how to improve things, chances
    are someone else did as well; so please run a search on the issue tracker
    if someone else had the same idea already, contribute to the discussion if
