@@ -22,6 +22,7 @@ Get to know pwhash
 .. toctree::
 
    getting-started.rst
+   deployment.rst
 
 
 API
