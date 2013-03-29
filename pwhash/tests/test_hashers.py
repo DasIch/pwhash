@@ -98,13 +98,29 @@ class TestSaltingDigestHashers(HasherTestBase, SaltingTestMixin, UpgradableTestM
 
 
 class TestPBKDF2Hasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
-    @pytest.fixture
-    def hasher(self):
-        return PBKDF2Hasher(rounds=1)
+    @pytest.fixture(params=["rounds", "method", "salt_length"])
+    def argument(self, request):
+        return request.param
 
     @pytest.fixture
-    def upgraded(self):
-        return PBKDF2Hasher(rounds=2)
+    def hasher(self, argument):
+        kwargs = {"rounds": 1}
+        kwargs[argument] = {
+            "rounds": 1,
+            "method": "hmac-sha1",
+            "salt_length": 1
+        }[argument]
+        return PBKDF2Hasher(**kwargs)
+
+    @pytest.fixture
+    def upgraded(self, argument):
+        kwargs = {"rounds": 1}
+        kwargs[argument] = {
+            "rounds": 2,
+            "method": "hmac-sha256",
+            "salt_length": 2
+        }[argument]
+        return PBKDF2Hasher(**kwargs)
 
 
 class TestBCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
