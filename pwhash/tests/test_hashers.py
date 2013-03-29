@@ -61,6 +61,8 @@ class UpgradableTestMixin(object):
 
 class SaltingTestMixin(object):
     def test_inequality(self, hasher, password):
+        # salts should be unique, making the hash derived also unique and
+        # therefore all hashes we create with one password unequal
         assert hasher.create(password) != hasher.create(password)
 
 
