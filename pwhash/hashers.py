@@ -186,7 +186,8 @@ class PBKDF2Hasher(UpgradeableHasher):
     """
     name = "pbkdf2"
 
-    def __init__(self, rounds, method="hmac-sha1", salt_length=DEFAULT_SALT_LENGTH):
+    def __init__(self, rounds, method="hmac-sha1",
+                 salt_length=DEFAULT_SALT_LENGTH):
         self.rounds = rounds
         self.method = method
         self.salt_length = salt_length
@@ -594,7 +595,9 @@ class PasswordHasher(UpgradeableMixin):
             return self.hashers[hasher_name]
         except KeyError:
             raise ValueError(
-                "unknown name (%r) or invalid hash: %r" % (hasher_name, formatted_hash)
+                "unknown name (%r) or invalid hash: %r" % (
+                    hasher_name, formatted_hash
+                )
             )
 
     def verify(self, password, formatted_hash):
