@@ -10,6 +10,6 @@ install:
   - "if [[ $BCRYPT == 1 ]]; then pip install py-bcrypt; fi"
   - pip install .
 script:
-  - py.test
+  - py.test -v
   - sphinx-build -aEWb linkcheck docs docs/_build
   - sphinx-build -aEWb doctest docs docs/_build
