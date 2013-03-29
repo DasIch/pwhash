@@ -194,10 +194,14 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
             "pwhashc.json",
             relative_to_importable=__name__
         )
+        # test basic functionality
         assert hasher.verify(
             u"long-password",
             hasher.create(u"long-password")
         )
+
+        # test that min_password_length from config is passed to
+        # PasswordHasher()
         with pytest.raises(ValueError):
             hasher.create(u"password")
 
