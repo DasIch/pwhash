@@ -106,19 +106,24 @@ class TestPBKDF2Hasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
     def upgraded(self):
         return PBKDF2Hasher(rounds=2)
 
-if bcrypt is None:
-    def test_bcrypt_hasher():
+
+class TestBCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
+    @pytest.fixture
+    def hasher(self):
+        if bcrypt is None:
+            pytest.skip(u"bcrypt not installed")
+        return BCryptHasher(cost=1)
+
+    @pytest.fixture
+    def upgraded(self):
+        if bcrypt is None:
+            pytest.skip(u"bcrypt not installed")
+        return BCryptHasher(cost=2)
+
+    @pytest.mark.skipif("bcrypt is not None")
+    def test_init(self):
         with pytest.raises(RuntimeError):
             BCryptHasher(cost=1)
-else:
-    class TestBCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
-        @pytest.fixture
-        def hasher(self):
-            return BCryptHasher(cost=1)
-
-        @pytest.fixture
-        def upgraded(self):
-            return BCryptHasher(cost=2)
 
 
 class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
