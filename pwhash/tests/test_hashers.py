@@ -90,11 +90,11 @@ class TestSaltingDigestHashers(HasherTestBase, SaltingTestMixin, UpgradableTestM
 
     @pytest.fixture
     def hasher(self, hasher_cls):
-        return hasher_cls(salt_length=1)
+        return hasher_cls(salt_length=10)
 
     @pytest.fixture
     def upgraded(self, hasher_cls):
-        return hasher_cls(salt_length=2)
+        return hasher_cls(salt_length=11)
 
 
 class TestPBKDF2Hasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
@@ -108,7 +108,7 @@ class TestPBKDF2Hasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         kwargs[argument] = {
             "rounds": 1,
             "method": "hmac-sha1",
-            "salt_length": 1
+            "salt_length": 10
         }[argument]
         return PBKDF2Hasher(**kwargs)
 
@@ -118,7 +118,7 @@ class TestPBKDF2Hasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         kwargs[argument] = {
             "rounds": 2,
             "method": "hmac-sha256",
-            "salt_length": 2
+            "salt_length": 11
         }[argument]
         return PBKDF2Hasher(**kwargs)
 
@@ -145,14 +145,14 @@ class TestBCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
 class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
     @pytest.fixture
     def hasher(self):
-        return PasswordHasher([SaltedMD5Hasher(salt_length=1)])
+        return PasswordHasher([SaltedMD5Hasher(salt_length=10)])
 
     @pytest.fixture(params=["internal", "external"])
     def upgraded(self, request):
         if request.param == "internal":
-            return PasswordHasher([SaltedMD5Hasher(salt_length=2)])
+            return PasswordHasher([SaltedMD5Hasher(salt_length=11)])
         elif request.param == "external":
-            return PasswordHasher([HMACMD5(), SaltedMD5Hasher(salt_length=1)])
+            return PasswordHasher([HMACMD5(), SaltedMD5Hasher(salt_length=10)])
 
     def test_from_config(self, recwarn):
         config = {
