@@ -537,7 +537,10 @@ class PasswordHasher(UpgradeableMixin):
                 )
             else:
                 hashers.append(hasher_cls(**hasher_config))
-        return cls(hashers)
+        return cls(
+            hashers,
+            min_password_length=config["application"]["min_password_length"]
+        )
 
     @classmethod
     def from_config_file(cls, filepath, relative_to_importable=None):
@@ -560,8 +563,9 @@ class PasswordHasher(UpgradeableMixin):
             filepath = os.path.join(importable_dir, filepath)
         return cls.from_config(config.load(filepath))
 
-    def __init__(self, hashers):
+    def __init__(self, hashers, min_password_length=8):
         self.hashers = OrderedDict((hasher.name, hasher) for hasher in hashers)
+        self.min_password_length = min_password_length
 
     @property
     def preferred_hasher(self):
@@ -575,6 +579,13 @@ class PasswordHasher(UpgradeableMixin):
         Returns the a hash for the given `password` using
         :attr:`preferred_hasher`.
         """
+        password_length = len(password)
+        if password_length < self.min_password_length:
+            raise ValueError(
+                "password is below minimum length: %d < %d" % (
+                    password_length, self.min_password_length
+                )
+            )
         return self.preferred_hasher.create(password)
 
     def get_hasher(self, formatted_hash):

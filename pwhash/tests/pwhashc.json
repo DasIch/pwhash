@@ -1,8 +1,10 @@
 {
-    "version": {
-        "application": 1, 
-        "deployment": 1
+    "application": {
+        "min_password_length": 9, 
+        "duration": 0.1, 
+        "application_version": 1
     }, 
+    "version": 1, 
     "hashers": {
         "salted-sha1": {
             "salt_length": 32
@@ -18,7 +20,7 @@
         }, 
         "pbkdf2": {
             "salt_length": 32, 
-            "rounds": 97087, 
+            "rounds": 76923, 
             "method": "hmac-sha1"
         }, 
         "salted-md5": {

@@ -156,6 +156,9 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
 
     def test_from_config(self, recwarn):
         config = {
+            "application": {
+                "min_password_length": 8,
+            },
             "hashers": {
                 "pbkdf2": {
                     "rounds": 1,
@@ -175,7 +178,10 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         assert pw_hasher.verify(b"password", hash)
         assert not recwarn.list
 
-        pw_hasher = PasswordHasher.from_config({"hashers": {}})
+        pw_hasher = PasswordHasher.from_config({
+            "application": {"min_password_length": 8},
+            "hashers": {}
+        })
         if bcrypt is not None:
             warning = recwarn.pop(ConfigWarning)
             assert "bcrypt" in str(warning.message)
@@ -184,8 +190,17 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         assert not recwarn.list
 
     def test_from_config_file(self):
-        pw_hasher = PasswordHasher.from_config_file(
+        hasher = PasswordHasher.from_config_file(
             "pwhashc.json",
             relative_to_importable=__name__
         )
-        assert pw_hasher.verify(u"password", pw_hasher.create(u"password"))
+        assert hasher.verify(
+            u"long-password",
+            hasher.create(u"long-password")
+        )
+        with pytest.raises(ValueError):
+            hasher.create(u"password")
+
+    def test_create_min_password_length(self, hasher):
+        with pytest.raises(ValueError):
+            hasher.create(u"foobar") # < min_password_length=8

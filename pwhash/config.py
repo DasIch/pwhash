@@ -54,10 +54,8 @@ def compile(application_config):
         raise ValueError("application_config outdated or pwhash outdated")
     pbkdf2_method = "hmac-sha1"
     config = {
-        "version": {
-            "application": application_config["application_version"],
-            "deployment": DEPLOYMENT_VERSION
-        },
+        "version": DEPLOYMENT_VERSION,
+        "application": application_config,
         "hashers": {
             "pbkdf2": {
                 "rounds": determine_pbkdf2_rounds(
