@@ -66,7 +66,8 @@ class TestConfigCLI(object):
 
         assert os.listdir(tmpdir) == [filename]
 
-    def create_config(self, min_password_length, duration, directory, name="pwhash.json"):
+    def create_config(self, min_password_length, duration, directory,
+                      name="pwhash.json"):
         with self.spawn("create -o %s" % name, cwd=directory) as p:
             p.expect("What is the minimum password length?")
             p.sendline(str(min_password_length))
