@@ -578,7 +578,13 @@ class PasswordHasher(UpgradeableMixin):
         return self.preferred_hasher.create(password)
 
     def get_hasher(self, formatted_hash):
-        return self.hashers[bytes_to_native(formatted_hash.split(b"$", 1)[0])]
+        hasher_name = bytes_to_native(formatted_hash.split(b"$", 1)[0])
+        try:
+            return self.hashers[hasher_name]
+        except KeyError:
+            raise ValueError(
+                "unknown name (%r) or invalid hash: %r" % (hasher_name, formatted_hash)
+            )
 
     def verify(self, password, formatted_hash):
         """
