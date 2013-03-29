@@ -14,9 +14,6 @@ import pexpect
 
 import pwhash
 from pwhash import config
-from pwhash.tests.utils import create_temp_dir
-
-
 
 
 class TestConfigCLI(object):
@@ -45,29 +42,29 @@ class TestConfigCLI(object):
         ("create -o foo.json", "foo.json"),
         ("create --out bar.json", "bar.json")
     ])
-    def test_create(self, command, filename):
-        with create_temp_dir() as temp_dir:
-            with self.spawn(command, cwd=temp_dir) as p:
-                p.expect("What is the minimum password length?")
-                p.sendline("a")
-                p.expect("'a' is not an integer")
-                p.expect("What is the minimum password length?")
-                p.sendline("0")
-                p.expect("Passwords must be at least one character long")
-                p.expect("What is the minimum password length?")
-                p.sendline("8")
+    def test_create(self, tmpdir, command, filename):
+        tmpdir = str(tmpdir)
+        with self.spawn(command, cwd=tmpdir) as p:
+            p.expect("What is the minimum password length?")
+            p.sendline("a")
+            p.expect("'a' is not an integer")
+            p.expect("What is the minimum password length?")
+            p.sendline("0")
+            p.expect("Passwords must be at least one character long")
+            p.expect("What is the minimum password length?")
+            p.sendline("8")
 
-                p.expect("How long should hashing take in seconds?")
-                p.sendline("a")
-                p.expect("'a' is not a float")
-                p.expect("How long should hashing take in seconds?")
-                p.sendline("0")
-                p.expect("The duration must be more than 0s")
-                p.expect("How long should hashing take in seconds?")
-                p.sendline("0.1")
-                p.expect("%r created!" % filename)
+            p.expect("How long should hashing take in seconds?")
+            p.sendline("a")
+            p.expect("'a' is not a float")
+            p.expect("How long should hashing take in seconds?")
+            p.sendline("0")
+            p.expect("The duration must be more than 0s")
+            p.expect("How long should hashing take in seconds?")
+            p.sendline("0.1")
+            p.expect("%r created!" % filename)
 
-            assert os.listdir(temp_dir) == [filename]
+        assert os.listdir(tmpdir) == [filename]
 
     def create_config(self, min_password_length, duration, directory, name="pwhash.json"):
         with self.spawn("create -o %s" % name, cwd=directory) as p:
@@ -82,16 +79,16 @@ class TestConfigCLI(object):
         ("compile -o foo.json pwhash.json", "foo.json"),
         ("compile --out bar.json pwhash.json", "bar.json")
     ])
-    def test_compile(self, command, filename):
-        with create_temp_dir() as temp_dir:
-            self.create_config(8, 0.1, temp_dir)
-            assert os.listdir(temp_dir) == ["pwhash.json"]
-            with self.spawn(command, cwd=temp_dir) as p:
-                p.expect("%r created!" % filename)
-            assert set(os.listdir(temp_dir)) == {"pwhash.json", filename}
+    def test_compile(self, tmpdir, command, filename):
+        tmpdir = str(tmpdir)
+        self.create_config(8, 0.1, tmpdir)
+        assert os.listdir(tmpdir) == ["pwhash.json"]
+        with self.spawn(command, cwd=tmpdir) as p:
+            p.expect("%r created!" % filename)
+        assert set(os.listdir(tmpdir)) == {"pwhash.json", filename}
 
-    def test_upgrade(self):
-        with create_temp_dir() as temp_dir:
-            self.create_config(8, 0.1, temp_dir)
-            with self.spawn("upgrade pwhash.json", cwd=temp_dir) as p:
-                p.expect("application config already at most recent version")
+    def test_upgrade(self, tmpdir):
+        tmpdir = str(tmpdir)
+        self.create_config(8, 0.1, tmpdir)
+        with self.spawn("upgrade pwhash.json", cwd=tmpdir) as p:
+            p.expect("application config already at most recent version")

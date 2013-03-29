@@ -1,16 +1,4 @@
 # coding: utf-8
-from shutil import rmtree
-from tempfile import mkdtemp
-from contextlib import contextmanager
-
-
-@contextmanager
-def create_temp_dir():
-    temp_dir = mkdtemp()
-    try:
-        yield temp_dir
-    finally:
-        rmtree(temp_dir)
 
 
 PBKDF2_TEST_VECTORS = [

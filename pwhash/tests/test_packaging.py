@@ -14,8 +14,6 @@ from functools import partial
 
 import pytest
 
-from pwhash.tests.utils import create_temp_dir
-
 
 PACKAGE_PATH = os.path.dirname(os.path.abspath(__file__))
 TEST_PACKAGE_PATH = os.path.join(PACKAGE_PATH, "package")
@@ -56,12 +54,12 @@ def install_pip(root):
 
 
 @pytest.mark.parametrize("install", [install_setuppy, install_pip])
-def test_install(install):
+def test_install(install, tmpdir):
+    tmpdir = str(tmpdir)
     try:
-        with create_temp_dir() as root:
-            assert os.path.isfile(
-                os.path.join(install(root), "package", "pwhashc.json")
-            )
+        assert os.path.isfile(
+            os.path.join(install(tmpdir), "package", "pwhashc.json")
+        )
     finally:
         for name in os.listdir(TEST_PACKAGE_PATH):
             name = os.path.join(TEST_PACKAGE_PATH, name)
