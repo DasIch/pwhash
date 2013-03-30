@@ -39,6 +39,14 @@ class HasherTestBase(object):
         with pytest.raises(ValueError):
             hasher.verify(password, b"invalid-hash")
 
+    def test_max_hash_length(self, hasher, password):
+        assert hasher.max_hash_length >= 0
+        assert len(hasher.create(password)) <= hasher.max_hash_length
+
+    def test_min_hash_length(self, hasher, password):
+        assert hasher.min_hash_length >= 0
+        assert len(hasher.create(password)) >= hasher.min_hash_length
+
 
 class UpgradableTestMixin(object):
     def test_upgrade(self, hasher, upgraded, password):
@@ -71,6 +79,9 @@ class TestPlainHasher(HasherTestBase):
     @pytest.fixture
     def hasher(self):
         return PlainHasher()
+
+    def test_max_hash_length(self, hasher):
+        assert hasher.max_hash_length is None
 
 
 class TestDigestHashers(HasherTestBase):
@@ -159,6 +170,9 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
             return PasswordHasher(
                 [HMACMD5Hasher(), SaltedMD5Hasher(salt_length=10)]
             )
+
+    def test_min_hash_length(self, hasher):
+        assert hasher.min_hash_length >= hasher.min_password_length
 
     def test_from_config(self, recwarn):
         config = {

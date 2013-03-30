@@ -66,6 +66,21 @@ class Hasher(object):
         arguments = argspec.args[1:default_offset]
         return bool(arguments)
 
+    @property
+    def max_hash_length(self):
+        """
+        The maximum length of the hash returned by :meth:`create` or `None` if
+        a maximum length cannot be determined.
+        """
+        return len(self.create(u"password"))
+
+    @property
+    def min_hash_length(self):
+        """
+        The minimum length of the hash returned by :meth:`create`.
+        """
+        return 0 if self.max_hash_length is None else self.max_hash_length
+
     def parse(self, formatted_hash):
         if not b"$" in formatted_hash:
             raise ValueError("name missing: %r" % formatted_hash)
@@ -246,6 +261,10 @@ class PlainHasher(Hasher):
     A hasher that uses a plain password as "hash".
     """
     name = "plain"
+
+    @property
+    def max_hash_length(self):
+        return None
 
     def _create_from_bytes(self, password):
         return self.format({"name": self.name, "hash": password})
@@ -504,9 +523,7 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in filter(None, [
     SaltedMD5Hasher,
     # digest
     SHA512Hasher, SHA384Hasher, SHA256Hasher, SHA224Hasher, SHA1Hasher,
-    MD5Hasher,
-    # plain
-    PlainHasher
+    MD5Hasher
 ]))
 
 
@@ -572,6 +589,34 @@ class PasswordHasher(UpgradeableMixin):
         The hasher used to create new password hashes.
         """
         return next(iter(self.hashers.values()))
+
+    @property
+    def max_hash_length(self):
+        """
+        The maximum hash length or `None` if it depends on the hashed
+        passsword. Take a look at :attr:`min_hash_length` for the latter case.
+        """
+        result = 0
+        for hasher in self.hashers.values():
+            if hasher.max_hash_length is None:
+                return None
+            if hasher.max_hash_length > result:
+                result = hasher.max_hash_length
+        return result
+
+    @property
+    def min_hash_length(self):
+        """
+        The minimum length of a hash returned by :meth:`create`.
+
+        Assuming the length of hashes depends on the length of your password,
+        you can compute the maximum hash length for your application using::
+
+           max_hash_len = min_hash_len + max_password_len
+        """
+        return max(
+            hasher.min_hash_length for hasher in self.hashers.values()
+        )
 
     def create(self, password):
         """
