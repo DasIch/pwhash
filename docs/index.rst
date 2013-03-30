@@ -23,6 +23,7 @@ Get to know pwhash
 
    getting-started.rst
    deployment.rst
+   storage.rst
 
 
 API
