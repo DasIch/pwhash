@@ -42,6 +42,7 @@ Additional Notes
 
 .. toctree::
 
+   other/security.rst
    other/contributing.rst
    other/changelog.rst
    other/license.rst
