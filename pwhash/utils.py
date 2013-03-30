@@ -250,4 +250,11 @@ else:
 
 
 def int_to_bytes(n):
+    """
+    Safely turns an integer into a byte string.
+
+    This is necessary because ``bytes(int)`` yields different results on 2.x
+    and 3.x. On 2.x it yields the integer as ascii encoded byte string and on
+    3.x it yields an `int` bytes long byte string consisting of null bytes.
+    """
     return str(n).encode("ascii")
