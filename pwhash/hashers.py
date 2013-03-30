@@ -7,9 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
-import sys
 import hmac
-import json
 import inspect
 import hashlib
 import warnings
@@ -19,7 +17,7 @@ from collections import OrderedDict, namedtuple
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import (
     constant_time_equal, classproperty, _import_bcrypt, get_root_path,
-    text_type, native_to_bytes, bytes_to_native
+    text_type, native_to_bytes, bytes_to_native, int_to_bytes
 )
 
 bcrypt = _import_bcrypt()
@@ -153,7 +151,7 @@ class BCryptHasher(UpgradeableHasher):
     def format(self, context):
         return b"$".join([
             native_to_bytes(context["name"]),
-            str(context["cost"]).encode("ascii"),
+            int_to_bytes(context["cost"]),
             context["hash"]
         ])
 
@@ -217,7 +215,7 @@ class PBKDF2Hasher(UpgradeableHasher):
         return b"$".join([
             native_to_bytes(context["name"]),
             context["method"].encode("ascii"),
-            str(context["rounds"]).encode("ascii"),
+            int_to_bytes(context["rounds"]),
             hexlify(context["salt"]),
             hexlify(context["hash"])
         ])

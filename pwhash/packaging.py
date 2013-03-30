@@ -7,8 +7,6 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
-import json
-import codecs
 from distutils import log
 from setuptools.command.install import install as InstallBase
 

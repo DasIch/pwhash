@@ -13,7 +13,6 @@ import math
 import random
 import pkgutil
 import warnings
-from functools import partial
 
 from cffi import FFI
 import pkg_resources
@@ -248,3 +247,7 @@ else:
 
     def bytes_to_native(bytes):
         return bytes
+
+
+def int_to_bytes(n):
+    return str(n).encode("ascii")
