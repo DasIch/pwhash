@@ -444,7 +444,7 @@ class HMACHasher(UpgradeableHasher):
             return self.create(password)
 
 
-class HMACMD5(HMACHasher):
+class HMACMD5Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and MD5.
     """
@@ -452,7 +452,7 @@ class HMACMD5(HMACHasher):
     _digest = hashlib.md5
 
 
-class HMACSHA1(HMACHasher):
+class HMACSHA1Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA1.
     """
@@ -460,7 +460,7 @@ class HMACSHA1(HMACHasher):
     _digest = hashlib.sha1
 
 
-class HMACSHA224(HMACHasher):
+class HMACSHA224Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA224.
     """
@@ -468,7 +468,7 @@ class HMACSHA224(HMACHasher):
     _digest = hashlib.sha224
 
 
-class HMACSHA256(HMACHasher):
+class HMACSHA256Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA256.
     """
@@ -476,7 +476,7 @@ class HMACSHA256(HMACHasher):
     _digest = hashlib.sha256
 
 
-class HMACSHA384(HMACHasher):
+class HMACSHA384Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA384.
     """
@@ -484,7 +484,7 @@ class HMACSHA384(HMACHasher):
     _digest = hashlib.sha384
 
 
-class HMACSHA512(HMACHasher):
+class HMACSHA512Hasher(HMACHasher):
     """
     A hasher that uses HMAC with a salt and SHA512.
     """
@@ -496,8 +496,8 @@ ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in filter(None, [
     None if bcrypt is None else BCryptHasher,
     PBKDF2Hasher,
     # hmac
-    HMACSHA512, HMACSHA384, HMACSHA256, HMACSHA224, HMACSHA1,
-    HMACMD5,
+    HMACSHA512Hasher, HMACSHA384Hasher, HMACSHA256Hasher, HMACSHA224Hasher,
+    HMACSHA1Hasher, HMACMD5Hasher,
     # salted digest
     SaltedSHA512Hasher, SaltedSHA384Hasher, SaltedSHA256Hasher,
     SaltedSHA224Hasher, SaltedSHA1Hasher,

@@ -10,22 +10,22 @@ pwhash.hashers
 .. autoclass:: PBKDF2Hasher
    :inherited-members:
 
-.. autoclass:: HMACSHA512
+.. autoclass:: HMACSHA512Hasher
    :inherited-members:
 
-.. autoclass:: HMACSHA384
+.. autoclass:: HMACSHA384Hasher
    :inherited-members:
 
-.. autoclass:: HMACSHA256
+.. autoclass:: HMACSHA256Hasher
    :inherited-members:
 
-.. autoclass:: HMACSHA224
+.. autoclass:: HMACSHA224Hasher
    :inherited-members:
 
-.. autoclass:: HMACSHA1
+.. autoclass:: HMACSHA1Hasher
    :inherited-members:
 
-.. autoclass:: HMACMD5
+.. autoclass:: HMACMD5Hasher
    :inherited-members:
 
 .. autoclass:: SaltedSHA512Hasher

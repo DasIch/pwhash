@@ -9,10 +9,11 @@
 from pwhash import PasswordHasher
 from pwhash.hashers import (
     BCryptHasher, PBKDF2Hasher, PlainHasher, MD5Hasher, SHA1Hasher,
-    SHA224Hasher, SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5, HMACSHA1,
-    HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512, SaltedMD5Hasher,
-    SaltedSHA1Hasher, SaltedSHA224Hasher, SaltedSHA256Hasher,
-    SaltedSHA384Hasher, SaltedSHA512Hasher, ALL_HASHERS, ConfigWarning
+    SHA224Hasher, SHA256Hasher, SHA384Hasher, SHA512Hasher, HMACMD5Hasher,
+    HMACSHA1Hasher, HMACSHA224Hasher, HMACSHA256Hasher, HMACSHA384Hasher,
+    HMACSHA512Hasher, SaltedMD5Hasher, SaltedSHA1Hasher, SaltedSHA224Hasher,
+    SaltedSHA256Hasher, SaltedSHA384Hasher, SaltedSHA512Hasher, ALL_HASHERS,
+    ConfigWarning
 )
 from pwhash.utils import _import_bcrypt
 
@@ -82,8 +83,9 @@ class TestDigestHashers(HasherTestBase):
 class TestSaltingDigestHashers(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
     hashers = [
         SaltedMD5Hasher, SaltedSHA1Hasher, SaltedSHA224Hasher,
-        SaltedSHA256Hasher, SaltedSHA384Hasher, SaltedSHA512Hasher, HMACMD5,
-        HMACSHA1, HMACSHA224, HMACSHA256, HMACSHA384, HMACSHA512
+        SaltedSHA256Hasher, SaltedSHA384Hasher, SaltedSHA512Hasher,
+        HMACMD5Hasher, HMACSHA1Hasher, HMACSHA224Hasher, HMACSHA256Hasher,
+        HMACSHA384Hasher, HMACSHA512Hasher
     ]
 
     @pytest.fixture(params=hashers)
@@ -154,7 +156,9 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         if request.param == "internal":
             return PasswordHasher([SaltedMD5Hasher(salt_length=11)])
         elif request.param == "external":
-            return PasswordHasher([HMACMD5(), SaltedMD5Hasher(salt_length=10)])
+            return PasswordHasher(
+                [HMACMD5Hasher(), SaltedMD5Hasher(salt_length=10)]
+            )
 
     def test_from_config(self, recwarn):
         config = {
