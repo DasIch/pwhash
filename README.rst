@@ -23,3 +23,8 @@ of cryptographic hashing functions, making password hashing as simple as:
 
 There is no reason to make password hashing more difficult or upgrading your
 hash function less seamless.
+
+Want to learn more or contribute? Take a look at our documentation_.
+
+
+.. _documentation: http://pwhash.rtfd.org
