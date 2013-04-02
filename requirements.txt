@@ -1,3 +1,5 @@
 cffi
 pexpect-u
 sphinx
+pytest
+tox

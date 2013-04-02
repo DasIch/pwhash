@@ -21,6 +21,45 @@ Nevertheless there are a couple of things to be aware of:
    for everyone if the code will not be merged. Let us prevent this early
    through communication.
 
+
+Setting up a development environment
+------------------------------------
+
+Setting up a development environment to work on pwhash is fairly trivial.
+Nevertheless this is how you get started:
+
+The first step is forking the repository_ on GitHub. Once you have done that
+you can clone your fork to create a local repository using::
+
+   $ git clone git@github.com:YourGitHubName/pwhash.git
+
+Having done that you should probably create a virtual environment using
+virtualenv_ and activate it. If you don't know what virtualenv is, you should
+learn about it before continuing, it is a very useful tool that you should be
+familiar with if you are doing anything serious in Python.
+
+So once you have created your virtual environment and activated it, it is time
+to install all development tools and pwhash dependencies. You can do that by
+running::
+
+   $ make dev
+
+This may take a while, once it is done you should have setup the development
+environment successfully. You can test that everything works by running::
+
+   $ py.test
+
+This will run all tests using your default python interpreter, all of which
+should pass.
+
+You have no idea what to do now? Take a look at the `open issues`_ may be you
+will find an interesting challenge there.
+
+.. _repository: https://github.com/DasIch/pwhash
+.. _virtualenv: http://www.virtualenv.org/en/latest/
+.. _open issues: https://github.com/DasIch/pwhash/issues?sort=created&state=open
+
+
 .. _code-of-conduct:
 
 Code of Conduct
