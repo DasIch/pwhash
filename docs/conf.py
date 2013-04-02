@@ -248,3 +248,7 @@ texinfo_documents = [
 intersphinx_mapping = {'http://docs.python.org/': None}
 
 autodoc_member_order = "bysource"
+
+# Checking the anchors causes issues when the anchors are used for navigation
+# or when checking intersphinx links as they use the wrong anchors for modules.
+linkcheck_anchors = False
