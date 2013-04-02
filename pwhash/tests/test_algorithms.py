@@ -17,8 +17,6 @@ import pytest
 def test_pbkdf2():
     for password, salt, rounds, hash_length, expected_hashes in PBKDF2_TEST_VECTORS:
         for method, expected_hash in expected_hashes.items():
-            if USING == "openssl" and method == "hmac-sha256":
-                pytest.xfail("openssl issue?")
             try:
                 hash = hexlify(pbkdf2(
                     password, salt, rounds, hash_length, method
