@@ -62,6 +62,31 @@ will find an interesting challenge there.
 
 .. _code-of-conduct:
 
+Running tests
+-------------
+
+We use pytest_ for testing, as you might expect you can therefore run the
+tests using::
+
+   $ py.test
+
+To test that everything works on all supported interpreters, with or without
+optional dependencies and that there are no issues with the documentation we
+use tox_, which you can use like so::
+
+   $ tox
+
+As the tests themselves can take quite a lot of time already, running tox takes
+even longer. This can be solved somewhat by using detox_, which works just like
+tox but executes all test environments in parallel. Detox can be invoked like
+tox, it takes all the same arguments etc. it is just called differently::
+
+   $ detox
+
+.. _pytest: http://pytest.org/latest/
+.. _tox: http://testrun.org/tox/latest/
+.. _detox: https://pypi.python.org/pypi/detox
+
 Code of Conduct
 ---------------
 
