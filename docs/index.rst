@@ -35,6 +35,7 @@ API
    api/config.rst
    api/hashers.rst
    api/packaging.rst
+   api/utils.rst
 
 
 Additional Notes

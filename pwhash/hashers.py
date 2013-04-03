@@ -161,7 +161,17 @@ class UpgradeableHasher(UpgradeableMixin, Hasher):
 
 class BCryptHasher(UpgradeableHasher):
     """
-    A hasher that uses bcrypt.
+    A hasher that uses bcrypt, implemented using py-bcrypt_. The `cost`
+    argument can be used to increase the performance/time required to hash a
+    password.
+
+    A good `cost` value can be determined using
+    :func:`pwhash.utils.determine_bcrypt_cost`.
+
+    Creating an instance may raise a :exc:`RuntimeError` if py-bcrypt_ is not
+    installed.
+
+    .. _py-bcrypt: http://www.mindrot.org/projects/py-bcrypt/
     """
     name = "bcrypt"
 
