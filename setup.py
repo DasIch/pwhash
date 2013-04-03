@@ -50,6 +50,8 @@ setup(
         "Development Status :: 1 - Pre-Alpha",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.3"
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
     ]
 )
