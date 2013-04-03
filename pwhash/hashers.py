@@ -50,6 +50,15 @@ def generate_salt(salt_length):
 class PasswordHash(object):
     """
     Represents a password hash.
+
+    A password hash in general consists of the `name` of the hash function
+    used, the `hash` returned by that function and optionally further
+    `parameters` (excluding the hashed string) that were passed to the hash
+    function and are necessary to reconstruct the `hash`. All arguments passed
+    to :class:`PasswordHash` are accessible as attributes on the returned
+    instance.
+
+    Each parameter is available as a read-only attribute for convenience.
     """
     def __init__(self, name, hash, **parameters):
         self.name = name

@@ -66,3 +66,6 @@ pwhash.hashers
 
 .. autoclass:: PlainHasher
    :inherited-members:
+
+.. autoclass:: PasswordHash
+   :members:
