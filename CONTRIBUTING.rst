@@ -47,7 +47,7 @@ running::
 This may take a while, once it is done you should have setup the development
 environment successfully. You can test that everything works by running::
 
-   $ py.test
+   $ py.test --fast
 
 This will run all tests using your default python interpreter, all of which
 should pass.
@@ -65,10 +65,14 @@ will find an interesting challenge there.
 Running tests
 -------------
 
-We use pytest_ for testing, as you might expect you can therefore run the
-tests using::
+We use pytest_ for testing, you can execute the tests with it using::
 
    $ py.test
+
+This can take quite a while, so to speed up testing you can use the `--fast`
+option to skip a couple of tests that take particularily long::
+
+   $ py.test --fast
 
 To test that everything works on all supported interpreters, with or without
 optional dependencies and that there are no issues with the documentation we
