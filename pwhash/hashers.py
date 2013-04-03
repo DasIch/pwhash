@@ -216,6 +216,24 @@ class BCryptHasher(UpgradeableHasher):
 class PBKDF2Hasher(UpgradeableHasher):
     """
     A hasher that uses PBKDF2.
+
+    :param rounds: The number of rounds/iterations to be performed by pbkdf2,
+                   this parameter can be increased to increase performance/time
+                   required to hash passwords.
+
+    :param method: The hash function that should be used by pbkdf2 internally,
+                   theoretically possible values are
+                   ``"hmac-sha{1,224,256,384,512}"``, which of these can
+                   actually be used depends on the underlying implementation.
+
+    :param salt_length: The length of the salt that should be used.
+
+    PBKDF2 is implemented with bindings to CommonCrypto_ and OpenSSL_. As Apple
+    has deprecated OpenSSL due to issues with ABI compatibilty, CommonCrypto is
+    used on OS X.
+
+    .. _CommonCrypto: https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man3/Common%20Crypto.3cc.html
+    .. _OpenSSL: http://www.openssl.org/
     """
     name = "pbkdf2"
 
