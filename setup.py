@@ -2,6 +2,7 @@
 import sys
 from setuptools import setup
 
+import pwhash
 import pwhash.utils
 import pwhash._openssl
 
@@ -25,7 +26,7 @@ else:
 
 setup(
     name="pwhash",
-    version="0.1-dev",
+    version=pwhash.__version__,
     license="BSD",
     author="Daniel Neuhäuser",
     author_email="dasdasich@gmail.com",
