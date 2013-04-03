@@ -60,8 +60,6 @@ will find an interesting challenge there.
 .. _open issues: https://github.com/DasIch/pwhash/issues?sort=created&state=open
 
 
-.. _code-of-conduct:
-
 Running tests
 -------------
 
@@ -90,6 +88,9 @@ tox, it takes all the same arguments etc. it is just called differently::
 .. _pytest: http://pytest.org/latest/
 .. _tox: http://testrun.org/tox/latest/
 .. _detox: https://pypi.python.org/pypi/detox
+
+
+.. _code-of-conduct:
 
 Code of Conduct
 ---------------
