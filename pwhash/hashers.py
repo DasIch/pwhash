@@ -107,6 +107,10 @@ class Hasher(object):
         return 0 if self.max_hash_length is None else self.max_hash_length
 
     def parse(self, formatted_hash):
+        """
+        Parses `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash`.
+        """
         if not b"$" in formatted_hash:
             raise ValueError("name missing: %r" % formatted_hash)
         name, hash = formatted_hash.split(b"$", 1)
@@ -124,6 +128,9 @@ class Hasher(object):
         """
         Returns a hash for `password`. If `password` is a unicode string it is
         encoded using utf-8.
+
+        The hash returned is created by calling :meth:`format` with a
+        :class:`PasswordHash` instance.
         """
         password = self._normalize_password(password)
         # py-bcrypt does not allow \0 in passwords. That is a very annoying
@@ -137,6 +144,10 @@ class Hasher(object):
         raise NotImplementedError()
 
     def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` instance and returns a byte string
+        containing all information needed to verify a hash.
+        """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
             hexlify(parsed_hash.hash)
