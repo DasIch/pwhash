@@ -13,12 +13,16 @@ from pwhash.hashers import (
     HMACSHA1Hasher, HMACSHA224Hasher, HMACSHA256Hasher, HMACSHA384Hasher,
     HMACSHA512Hasher, SaltedMD5Hasher, SaltedSHA1Hasher, SaltedSHA224Hasher,
     SaltedSHA256Hasher, SaltedSHA384Hasher, SaltedSHA512Hasher, ALL_HASHERS,
-    ConfigWarning
+    ConfigWarning, SCryptHasher
 )
 from pwhash.utils import _import_bcrypt
 
-bcrypt = _import_bcrypt()
 import pytest
+bcrypt = _import_bcrypt()
+try:
+    import scrypt
+except ImportError:
+    scrypt = None
 
 
 class HasherTestBase(object):
@@ -157,6 +161,51 @@ class TestBCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
             BCryptHasher(cost=1)
 
 
+class TestSCryptHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
+    @pytest.fixture(params=["salt_length", "nexp", "r", "p", "buflen"])
+    def argument(self, request):
+        return request.param
+
+    @pytest.fixture
+    def hasher(self, argument):
+        if scrypt is None:
+            pytest.skip(u"scrypt not installed")
+        kwargs = {
+            "salt_length": 10,
+            "nexp": 1
+        }
+        kwargs[argument] = {
+            "salt_length": 10,
+            "nexp": 1,
+            "r": 1,
+            "p": 1,
+            "buflen": 10
+        }[argument]
+        return SCryptHasher(**kwargs)
+
+    @pytest.fixture
+    def upgraded(self, argument):
+        if scrypt is None:
+            pytest.skip(u"scrypt not installed")
+        kwargs = {
+            "salt_length": 10,
+            "nexp": 1
+        }
+        kwargs[argument] = {
+            "salt_length": 11,
+            "nexp": 2,
+            "r": 2,
+            "p": 2,
+            "buflen": 11
+        }[argument]
+        return SCryptHasher(**kwargs)
+
+    @pytest.mark.skipif("scrypt is not None")
+    def test_init(self):
+        with pytest.raises(RuntimeError):
+            SCryptHasher(salt_length=10, nexp=1)
+
+
 class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
     @pytest.fixture
     def hasher(self):
@@ -188,6 +237,10 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
                 "bcrypt": {
                     "cost": 12
                 },
+                "scrypt": {
+                    "salt_length": 10,
+                    "nexp": 1
+                }
             }
         }
         for name, hasher, in ALL_HASHERS.items():
@@ -205,6 +258,9 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         if bcrypt is not None:
             warning = recwarn.pop(ConfigWarning)
             assert "bcrypt" in str(warning.message)
+        if scrypt is not None:
+            warning = recwarn.pop(ConfigWarning)
+            assert "scrypt" in str(warning.message)
         warning = recwarn.pop(ConfigWarning)
         assert "pbkdf2" in str(warning.message)
         assert not recwarn.list

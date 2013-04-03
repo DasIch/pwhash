@@ -14,6 +14,11 @@ import warnings
 from binascii import hexlify, unhexlify
 from collections import OrderedDict, namedtuple
 
+try:
+    import scrypt
+except ImportError:
+    scrypt = None
+
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import (
     constant_time_equal, classproperty, _import_bcrypt, get_root_path,
@@ -141,6 +146,99 @@ class UpgradeableMixin(object):
 
 class UpgradeableHasher(UpgradeableMixin, Hasher):
     pass
+
+
+_SCryptHash = namedtuple(
+    "_SCryptHash", ["salt", "nexp", "r", "p", "buflen", "hash"]
+)
+
+
+class SCryptHasher(UpgradeableHasher):
+    """
+    A hasher that uses scrypt.
+    """
+    name = "scrypt"
+
+    def __init__(self, salt_length, nexp=14, r=8, p=1, buflen=64):
+        if scrypt is None:
+            raise RuntimeError("scrypt is unavailable")
+        self.salt_length = salt_length
+        if nexp <= 0:
+            raise ValueError("nexp must be greater than 0, is %d" % nexp)
+        self.nexp = nexp
+        if r * p >= 2 ** 30:
+            raise ValueError()
+        self.r = r
+        self.p = p
+        self.buflen = buflen
+
+    def _create_from_bytes(self, password):
+        salt = generate_salt(self.salt_length)
+        return self.format({
+            "name": self.name,
+            "salt": salt,
+            "nexp": self.nexp,
+            "r": self.r,
+            "p": self.p,
+            "buflen": self.buflen,
+            "hash": scrypt.hash(
+                password,
+                salt,
+                N=2 ** self.nexp,
+                r=self.r,
+                p=self.p,
+                buflen=self.buflen
+            )
+        })
+
+    def format(self, context):
+        return b"$".join([
+            native_to_bytes(context["name"]),
+            hexlify(context["salt"]),
+            int_to_bytes(context["nexp"]),
+            int_to_bytes(context["r"]),
+            int_to_bytes(context["p"]),
+            int_to_bytes(context["buflen"]),
+            hexlify(context["hash"])
+        ])
+
+    def parse(self, formatted_hash):
+        formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
+        salt, nexp, r, p, buflen, hash = formatted_hash.split(b"$", 5)
+        return _SCryptHash(
+            unhexlify(salt),
+            int(nexp),
+            int(r),
+            int(p),
+            int(buflen),
+            unhexlify(hash)
+        )
+
+    def verify(self, password, formatted_hash):
+        if isinstance(password, text_type):
+            password = password.encode("utf-8")
+        parsed = self.parse(formatted_hash)
+        return constant_time_equal(
+            scrypt.hash(
+                password,
+                parsed.salt,
+                N=2 ** parsed.nexp,
+                r=parsed.r,
+                p=parsed.p,
+                buflen=parsed.buflen
+            ),
+            parsed.hash
+        )
+
+    def upgrade(self, password, formatted_hash):
+        parsed = self.parse(formatted_hash)
+        if (self.salt_length > len(parsed.salt) or
+            self.nexp > parsed.nexp or
+            self.r > parsed.r or
+            self.p > parsed.p or
+            self.buflen > parsed.buflen
+           ):
+            return self.create(password)
 
 
 _BCryptHash = namedtuple("_BCryptHash", ["cost", "hash"])
@@ -512,6 +610,7 @@ class HMACSHA512Hasher(HMACHasher):
 
 
 ALL_HASHERS = OrderedDict((hasher.name, hasher) for hasher in filter(None, [
+    None if scrypt is None else SCryptHasher,
     None if bcrypt is None else BCryptHasher,
     PBKDF2Hasher,
     # hmac

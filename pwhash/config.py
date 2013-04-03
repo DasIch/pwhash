@@ -67,6 +67,13 @@ def compile(application_config):
                 ),
                 "method": pbkdf2_method,
                 "salt_length": hashers.DEFAULT_SALT_LENGTH
+            },
+            "scrypt": {
+                "salt_length": hashers.DEFAULT_SALT_LENGTH,
+                "nexp": 14,
+                "r": 8,
+                "p": 1,
+                "buflen": 64
             }
         }
     }

@@ -5,9 +5,12 @@ python:
 env:
   - BCRYPT=0
   - BCRYPT=1
+  - SCRYPT=0
+  - SCRYPT=1
 install:
   - pip install --use-mirrors -r requirements.txt
   - "if [[ $BCRYPT == 1 ]]; then pip install py-bcrypt; fi"
+  - "if [[ $SCRYPT == 1 ]]; then pip install -e hg+https://bitbucket.org/mhallin/py-scrypt#egg=scrypt; fi"
   - pip install .
 script:
   - py.test -v

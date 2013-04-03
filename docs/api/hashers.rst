@@ -3,6 +3,8 @@ pwhash.hashers
 
 .. module:: pwhash.hashers
 
+.. autoclass:: SCryptHasher
+   :inherited-members:
 
 .. autoclass:: BCryptHasher
    :inherited-members:

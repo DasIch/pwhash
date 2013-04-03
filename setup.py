@@ -14,13 +14,13 @@ if sys.platform == "darwin":
     import pwhash._commoncrypto
     ext_modules.append(pwhash._commoncrypto.ffi.verifier.get_extension())
 
-
-if sys.version_info >= (3, 0):
-    extras_require = {}
-else:
+if sys.version_info < (3, 0):
     extras_require = {
-        "bcrypt": ["py-bcrypt>=0.3"]
+        "bcrypt": ["py-bcrypt>=0.3"],
+        "scrypt": ["scrypt"]
     }
+else:
+    extras_require = {}
 
 
 setup(

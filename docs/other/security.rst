@@ -17,12 +17,13 @@ bindings to libraries that implement those hash functions that are considered
 to be trustworthy and secure.
 
 Specifically pwhash uses `CommonCrypto`_ (on OS X) and `OpenSSL`_ (everywhere
-else) for PBKDF2, `py-bcrypt`_ for BCrypt and the standard library modules
-:mod:`hmac` and :mod:`hashlib` for anything else.
+else) for PBKDF2, `py-bcrypt`_ for BCrypt, `scrypt`_ for SCrypt and the
+standard library modules :mod:`hmac` and :mod:`hashlib` for anything else.
 
 .. _CommonCrypto: https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man3/Common%20Crypto.3cc.html
 .. _OpenSSL: http://www.openssl.org/
 .. _py-bcrypt: http://www.mindrot.org/projects/py-bcrypt/
+.. _scrypt: https://pypi.python.org/pypi/scrypt/
 
 
 Using timing-safe comparision functions
