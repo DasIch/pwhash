@@ -132,6 +132,12 @@ class Hasher(object):
     def _create_from_bytes(self, password):
         raise NotImplementedError()
 
+    def format(self, parsed_hash):
+        return b"$".join([
+            native_to_bytes(parsed_hash.name),
+            hexlify(parsed_hash.hash)
+        ])
+
     def verify(self, password, formatted_hash):
         """
         Returns `True` if `formatted_hash` was created using `password`.
@@ -343,9 +349,6 @@ class PlainHasher(Hasher):
     def _create_from_bytes(self, password):
         return self.format(PasswordHash(self.name, password))
 
-    def format(self, parsed_hash):
-        return native_to_bytes(parsed_hash.name) + b"$" + parsed_hash.hash
-
 
 class DigestHasher(Hasher):
     _digest = None
@@ -354,12 +357,6 @@ class DigestHasher(Hasher):
         return self.format(
             PasswordHash(self.name, self._digest(password).digest())
         )
-
-    def format(self, parsed_hash):
-        return b"$".join([
-            native_to_bytes(parsed_hash.name),
-            hexlify(parsed_hash.hash)
-        ])
 
 
 class MD5Hasher(DigestHasher):
