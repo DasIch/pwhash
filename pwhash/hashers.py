@@ -229,6 +229,9 @@ class BCryptHasher(UpgradeableHasher):
         """
         Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
         returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have an `cost` parameter
+        corresponding to the `cost` argument :class:`BCryptHasher` takes.
         """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
@@ -322,6 +325,10 @@ class PBKDF2Hasher(UpgradeableHasher):
         """
         Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
         returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `rounds` and `method`
+        parameter, corresponding to the arguments passed to
+        :class:`PBKDF2Hasher` as well as a `salt` parameter of type `str`.
         """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
@@ -441,6 +448,9 @@ class SaltedDigestHasher(UpgradeableHasher):
         """
         Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
         returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `salt` parameter of type
+        `str`.
         """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
