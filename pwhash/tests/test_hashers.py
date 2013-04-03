@@ -265,11 +265,13 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         assert "pbkdf2" in str(warning.message)
         assert not recwarn.list
 
-    def test_from_config_file(self):
+    def test_from_config_file(self, recwarn):
         hasher = PasswordHasher.from_config_file(
             "pwhashc.json",
             relative_to_importable=__name__
         )
+        assert not recwarn.list # no warnings issued
+
         # test basic functionality
         assert hasher.verify(
             u"long-password",
