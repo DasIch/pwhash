@@ -8,7 +8,7 @@ on the fly::
 
    from pwhash import PasswordHasher
 
-   pwhasher = PasswordHasher.from_config(config)
+   pwhasher = PasswordHasher.from_config_file("pwhashc.json")
    hash = pwhasher.create(u"password")
    verified, new_hash = pwhasher.verify_and_upgrade(u"password", hash)
    if verified:
