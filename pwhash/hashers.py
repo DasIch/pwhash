@@ -12,7 +12,7 @@ import inspect
 import hashlib
 import warnings
 from binascii import hexlify, unhexlify
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 
 from pwhash.algorithms import pbkdf2
 from pwhash.utils import (
@@ -45,6 +45,22 @@ DEFAULT_SALT_LENGTH = RECOMMENDED_MIN_SALT_LENGTH * 2
 
 def generate_salt(salt_length):
     return os.urandom(salt_length)
+
+
+class PasswordHash(object):
+    """
+    Represents a password hash.
+    """
+    def __init__(self, name, hash, **parameters):
+        self.name = name
+        self.hash = hash
+        self.parameters = parameters
+
+    def __getattr__(self, attribute_name):
+        try:
+            return self.parameters[attribute_name]
+        except KeyError:
+            raise AttributeError(attribute_name)
 
 
 class Hasher(object):
@@ -143,9 +159,6 @@ class UpgradeableHasher(UpgradeableMixin, Hasher):
     pass
 
 
-_BCryptHash = namedtuple("_BCryptHash", ["name", "cost", "hash"])
-
-
 class BCryptHasher(UpgradeableHasher):
     """
     A hasher that uses bcrypt.
@@ -161,7 +174,7 @@ class BCryptHasher(UpgradeableHasher):
     def parse(self, formatted_hash):
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         cost, hash = formatted_hash.split(b"$", 1)
-        return _BCryptHash(self.name, int(cost), hash)
+        return PasswordHash(self.name, hash, cost=int(cost))
 
     def format(self, parsed_hash):
         return b"$".join([
@@ -171,10 +184,10 @@ class BCryptHasher(UpgradeableHasher):
         ])
 
     def _create_from_bytes(self, password):
-        return self.format(_BCryptHash(
+        return self.format(PasswordHash(
             self.name,
-            self.cost,
-            bcrypt.hashpw(password, bcrypt.gensalt(self.cost))
+            bcrypt.hashpw(password, bcrypt.gensalt(self.cost)),
+            cost=self.cost
         ))
 
     def _verify_from_bytes(self, password, formatted_hash):
@@ -188,11 +201,6 @@ class BCryptHasher(UpgradeableHasher):
         parsed = self.parse(formatted_hash)
         if self.cost > parsed.cost:
             return self.create(password)
-
-
-_PBKDF2Hash = namedtuple(
-    "_PBKDF2Hash", ["name", "method", "rounds", "salt", "hash"]
-)
 
 
 class PBKDF2Hasher(UpgradeableHasher):
@@ -211,21 +219,24 @@ class PBKDF2Hasher(UpgradeableHasher):
     def parse(self, formatted_hash):
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         method, rounds, salt, hash = formatted_hash.split(b"$")
-        return _PBKDF2Hash(
-            self.name, method.decode("ascii"), int(rounds), unhexlify(salt),
-            unhexlify(hash)
+        return PasswordHash(
+            self.name,
+            unhexlify(hash),
+            method=method.decode("ascii"),
+            rounds=int(rounds),
+            salt=unhexlify(salt)
         )
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format(_PBKDF2Hash(
+        return self.format(PasswordHash(
             self.name,
-            self.method,
-            self.rounds,
-            salt,
             pbkdf2(
                 password, salt, self.rounds, self.hash_length, self.method
-            )
+            ),
+            method=self.method,
+            rounds=self.rounds,
+            salt=salt
         ))
 
     def format(self, parsed_hash):
@@ -258,9 +269,6 @@ class PBKDF2Hasher(UpgradeableHasher):
             return self.create(password)
 
 
-_PlainHash = namedtuple("_PlainHash", ["name", "hash"])
-
-
 class PlainHasher(Hasher):
     """
     A hasher that uses a plain password as "hash".
@@ -272,13 +280,10 @@ class PlainHasher(Hasher):
         return None
 
     def _create_from_bytes(self, password):
-        return self.format(_PlainHash(self.name, password))
+        return self.format(PasswordHash(self.name, password))
 
     def format(self, parsed_hash):
         return native_to_bytes(parsed_hash.name) + b"$" + parsed_hash.hash
-
-
-_DigestHash = namedtuple("_DigestHash", ["name", "hash"])
 
 
 class DigestHasher(Hasher):
@@ -286,7 +291,7 @@ class DigestHasher(Hasher):
 
     def _create_from_bytes(self, password):
         return self.format(
-            _DigestHash(self.name, self._digest(password).digest())
+            PasswordHash(self.name, self._digest(password).digest())
         )
 
     def format(self, parsed_hash):
@@ -344,9 +349,6 @@ class SHA512Hasher(DigestHasher):
     _digest = hashlib.sha512
 
 
-_SaltedDigestHash = namedtuple("_SaltedDigestHash", ["name", "salt", "hash"])
-
-
 class SaltedDigestHasher(UpgradeableHasher):
     _digest = None
 
@@ -355,10 +357,10 @@ class SaltedDigestHasher(UpgradeableHasher):
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format(_SaltedDigestHash(
+        return self.format(PasswordHash(
             self.name,
-            salt,
-            self._digest(salt + password).digest()
+            self._digest(salt + password).digest(),
+            salt=salt
         ))
 
     def format(self, parsed_hash):
@@ -371,7 +373,7 @@ class SaltedDigestHasher(UpgradeableHasher):
     def parse(self, formatted_hash):
         formatted_hash = Hasher.parse(self, formatted_hash)
         salt, hash = formatted_hash.split(b"$", 2)
-        return _SaltedDigestHash(self.name, unhexlify(salt), hash)
+        return PasswordHash(self.name, hash, salt=unhexlify(salt))
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
@@ -432,9 +434,6 @@ class SaltedSHA512Hasher(SaltedDigestHasher):
     _digest = hashlib.sha512
 
 
-_HMACHash = namedtuple("_HMACHash", ["name", "salt", "hash"])
-
-
 class HMACHasher(UpgradeableHasher):
     _digest = None
 
@@ -443,10 +442,10 @@ class HMACHasher(UpgradeableHasher):
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format(_HMACHash(
+        return self.format(PasswordHash(
             self.name,
-            salt,
-            hmac.new(salt, password, self._digest).digest()
+            hmac.new(salt, password, self._digest).digest(),
+            salt=salt
         ))
 
     def format(self, parsed_hash):
@@ -458,7 +457,7 @@ class HMACHasher(UpgradeableHasher):
 
     def parse(self, formatted_hash):
         salt, hash = UpgradeableHasher.parse(self, formatted_hash).split(b"$", 1)
-        return _HMACHash(self.name, unhexlify(salt), hash)
+        return PasswordHash(self.name, hash, salt=unhexlify(salt))
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
