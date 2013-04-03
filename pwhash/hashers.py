@@ -192,11 +192,21 @@ class BCryptHasher(UpgradeableHasher):
             raise RuntimeError("bcrypt unavailable; requires py-bcrypt >= 0.3")
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `cost` parameter.
+        """
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         cost, hash = formatted_hash.split(b"$", 1)
         return PasswordHash(self.name, hash, cost=int(cost))
 
     def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+        """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
             int_to_bytes(parsed_hash.cost),
