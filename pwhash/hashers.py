@@ -196,7 +196,8 @@ class BCryptHasher(UpgradeableHasher):
         Parses a `formatted_hash` as returned by :meth:`format` and returns a
         :class:`PasswordHash` object.
 
-        The returned hash object is expected to have a `cost` parameter.
+        The returned hash object is expected to have a `cost` parameter,
+        corresponding to the arguments passed to :class:`BCryptHasher`.
         """
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         cost, hash = formatted_hash.split(b"$", 1)
@@ -265,6 +266,14 @@ class PBKDF2Hasher(UpgradeableHasher):
         self.hash_length = DIGEST_SIZES[method]
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `rounds`, `method` and
+        `salt_length` parameter, corresponding to the arguments passed to
+        :class:`PBKDF2Hasher`.
+        """
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         method, rounds, salt, hash = formatted_hash.split(b"$")
         return PasswordHash(
@@ -288,6 +297,10 @@ class PBKDF2Hasher(UpgradeableHasher):
         ))
 
     def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+        """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
             parsed_hash.method.encode("ascii"),
