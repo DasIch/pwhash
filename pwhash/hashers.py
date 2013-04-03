@@ -117,7 +117,8 @@ class Hasher(object):
 
     def create(self, password):
         """
-        Returns a hash for `password`.
+        Returns a hash for `password`. If `password` is a unicode string it is
+        encoded using utf-8.
         """
         if isinstance(password, text_type):
             password = password.encode("utf-8")
@@ -664,8 +665,7 @@ class PasswordHasher(UpgradeableMixin):
 
     def create(self, password):
         """
-        Returns the a hash for the given `password` using
-        :attr:`preferred_hasher`.
+        Returns a hash for the given `password` using :attr:`preferred_hasher`.
         """
         password_length = len(password)
         if password_length < self.min_password_length:
