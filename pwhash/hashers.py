@@ -543,6 +543,13 @@ class HMACHasher(UpgradeableHasher):
         ))
 
     def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `salt` parameter of type
+        `str`.
+        """
         return b"$".join([
             native_to_bytes(parsed_hash.name),
             hexlify(parsed_hash.salt),
@@ -550,6 +557,12 @@ class HMACHasher(UpgradeableHasher):
         ])
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `salt` parameter.
+        """
         salt, hash = UpgradeableHasher.parse(self, formatted_hash).split(b"$", 1)
         return PasswordHash(self.name, hash, salt=unhexlify(salt))
 
