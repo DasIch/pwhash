@@ -115,13 +115,17 @@ class Hasher(object):
             raise ValueError("expected %r hash, got %r" % (self.name, name))
         return hash
 
+    def _normalize_password(self, password):
+        if isinstance(password, text_type):
+            password = password.encode("utf-8")
+        return password
+
     def create(self, password):
         """
         Returns a hash for `password`. If `password` is a unicode string it is
         encoded using utf-8.
         """
-        if isinstance(password, text_type):
-            password = password.encode("utf-8")
+        password = self._normalize_password(password)
         # py-bcrypt does not allow \0 in passwords. That is a very annoying
         # restriction however at the moment there is no other implementation,
         # that is maintained and trustworthy.
@@ -142,9 +146,10 @@ class Hasher(object):
         """
         Returns `True` if `formatted_hash` was created using `password`.
         """
-        if isinstance(password, text_type):
-            password = password.encode("utf-8")
-        return self._verify_from_bytes(password, formatted_hash)
+        return self._verify_from_bytes(
+            self._normalize_password(password),
+            formatted_hash
+        )
 
     def _verify_from_bytes(self, password, formatted_hash):
         return constant_time_equal(
