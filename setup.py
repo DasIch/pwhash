@@ -1,21 +1,30 @@
 # coding: utf-8
+import os
 import sys
 from setuptools import setup
 
-import pwhash
-import pwhash.utils
-import pwhash._openssl
-
-ext_modules = [
-    pwhash.utils.ffi.verifier.get_extension(),
-    pwhash._openssl.ffi.verifier.get_extension()
-]
+# If cffi is available we can import all our ffi stuff and compile it as
+# extensions, if it isn't for example when installing from PyPI we skip this.
+try:
+    import pwhash.utils
+    import pwhash._openssl
+except ImportError:
+    ext_modules = []
+else:
+    ext_modules = [
+        pwhash.utils.ffi.verifier.get_extension(),
+        pwhash._openssl.ffi.verifier.get_extension()
+    ]
 
 if sys.platform == "darwin":
-    import pwhash._commoncrypto
-    ext_modules.append(pwhash._commoncrypto.ffi.verifier.get_extension())
+    try:
+        import pwhash._commoncrypto
+        ext_modules.append(pwhash._commoncrypto.ffi.verifier.get_extension())
+    except ImportError:
+        pass
 
 
+# py-bcrypt doesn't support Python 3.x
 if sys.version_info >= (3, 0):
     extras_require = {}
 else:
@@ -24,9 +33,21 @@ else:
     }
 
 
+def get_version():
+    # We can't import pwhash because the cffi dependency and in the future
+    # others are not installed, yet, so we have to parse pwhash/__init__.py
+    with open(os.path.join(os.path.dirname(__file__), "pwhash", "__init__.py")) as f:
+        for line in f:
+            if line.startswith("__version__"):
+                return line.split("=")[1].replace('"', '').strip()
+                break
+        else:
+            raise ValueError("__version__ not found")
+
+
 setup(
     name="pwhash",
-    version=pwhash.__version__,
+    version=get_version(),
     license="BSD",
     author="Daniel Neuhäuser",
     author_email="dasdasich@gmail.com",

@@ -1,5 +1,7 @@
-cffi
+# testing
 pexpect-u
-sphinx
-pytest
 tox
+pytest
+
+# documentation
+sphinx
