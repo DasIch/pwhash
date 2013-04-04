@@ -45,6 +45,11 @@ def get_version():
             raise ValueError("__version__ not found")
 
 
+def get_long_description():
+    with open("README.rst") as f:
+        return f.read()
+
+
 setup(
     name="pwhash",
     version=get_version(),
@@ -52,6 +57,7 @@ setup(
     author="Daniel Neuhäuser",
     author_email="dasdasich@gmail.com",
     description="simple safe password hashing",
+    long_description=get_long_description(),
     url="https://github.com/DasIch/pwhash",
     packages=[
         "pwhash",
