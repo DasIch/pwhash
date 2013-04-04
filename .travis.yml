@@ -8,6 +8,7 @@ env:
 install:
   - pip install --use-mirrors -r requirements.txt
   - "if [[ $BCRYPT == 1 ]]; then pip install py-bcrypt; fi"
+  - python setup.py check --metadata --strict
   - pip install .
 script:
   - py.test -v
