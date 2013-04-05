@@ -350,26 +350,30 @@ def set_file_version(version_file_path, version, dry_run=False):
     result = StringIO()
     with open(version_file_path) as f:
         for line in f:
-            match = version_re.match(line)
-            if match is not None:
-                before, old_version, after = match.groups()
+            version_match = version_re.match(line)
+            version_info_match = version_info_re.match(line)
+            if version_match is None and version_info_match is None:
+                result.write(line)
+                continue
+            if version_match:
+                before, old_version, after = version_match.groups()
                 result.write(before)
                 result.write(version.to_string())
                 result.write(after)
                 logging.debug("__version__ replaced")
-                continue
-            match = version_info_re.match(line)
-            if match is not None:
+            elif version_info_match:
                 before, old_version_info = match.groups()
                 result.write(before)
                 result.write(version.to_info())
                 logging.debug("__version_info__ replaced")
-                continue
-            result.write(line)
+            else:
+                assert False, "should not be reached"
+            if line.endswith(os.linesep):
+                result.write(os.linesep)
 
     if not dry_run:
         with open(version_file_path, "w") as f:
-            f.write(result.read())
+            f.write(result.getvalue())
     logging.info("version in %s updated to %s", version_file_path, version)
 
 
