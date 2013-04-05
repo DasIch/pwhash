@@ -70,7 +70,7 @@ setup(
             "pwhash-config = pwhash.config:run"
         ]
     },
-    install_requires=["cffi>=0.5", "docopt>=0.6.0"],
+    install_requires=["cffi==0.4", "docopt>=0.6.0"],
     extras_require=extras_require,
     zip_safe=False,
     ext_modules=ext_modules,
