@@ -3,6 +3,11 @@ import os
 import sys
 from setuptools import setup
 
+try:
+    import __pypy__
+except ImportError:
+    __pypy__ = None
+
 # If cffi is available we can import all our ffi stuff and compile it as
 # extensions, if it isn't for example when installing from PyPI we skip this.
 try:
@@ -70,7 +75,10 @@ setup(
             "pwhash-config = pwhash.config:run"
         ]
     },
-    install_requires=["cffi==0.4", "docopt>=0.6.0"],
+    install_requires=[
+        "cffi>=0.5" if __pypy__ is None else "cffi==0.4",
+        "docopt>=0.6.0"
+    ],
     extras_require=extras_require,
     zip_safe=False,
     ext_modules=ext_modules,
