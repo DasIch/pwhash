@@ -8,6 +8,14 @@ try:
 except ImportError:
     __pypy__ = None
 
+try:
+    import pypissh
+except ImportError:
+    # non-developer
+    pass
+else:
+    pypissh.monkeypatch()
+
 # If cffi is available we can import all our ffi stuff and compile it as
 # extensions, if it isn't for example when installing from PyPI we skip this.
 try:
