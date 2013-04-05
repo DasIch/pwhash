@@ -347,27 +347,29 @@ def set_file_version(version_file_path, version, dry_run=False):
 
     Does not perform any changes on disk if `dry_run` is ``True``.
     """
-    dst_class = StringIO if dry_run else NamedTemporaryFile
-    with nested(open(version_file_path), dst_class()) as (src, dst):
-        for line in src:
+    result = StringIO()
+    with open(version_file_path) as f:
+        for line in f:
             match = version_re.match(line)
             if match is not None:
                 before, old_version, after = match.groups()
-                dst.write(before)
-                dst.write(version.to_string())
-                dst.write(after)
+                result.write(before)
+                result.write(version.to_string())
+                result.write(after)
                 logging.debug("__version__ replaced")
                 continue
             match = version_info_re.match(line)
             if match is not None:
                 before, old_version_info = match.groups()
-                dst.write(before)
-                dst.write(version.to_info())
+                result.write(before)
+                result.write(version.to_info())
                 logging.debug("__version_info__ replaced")
                 continue
-            dst.write(line)
+            result.write(line)
+
     if not dry_run:
-        os.rename(dst.filename, src.filename)
+        with open(version_file_path, "w") as f:
+            f.write(result.read())
     logging.info("version in %s updated to %s", version_file_path, version)
 
 
