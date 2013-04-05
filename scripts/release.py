@@ -10,6 +10,7 @@
 import os
 import re
 import sys
+import errno
 import shutil
 import logging
 import textwrap
@@ -232,7 +233,13 @@ class Git(object):
         Removes all ignored files and directories.
         """
         for path in self.get_ignored_files():
-            shutil.rmtree()
+            try:
+                shutil.rmtree(path)
+            except OSError as error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(path)
+                else:
+                    raise
 
     def tag(self, tag):
         """
