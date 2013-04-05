@@ -362,7 +362,7 @@ def set_file_version(version_file_path, version, dry_run=False):
                 result.write(after)
                 logging.debug("__version__ replaced")
             elif version_info_match:
-                before, old_version_info = match.groups()
+                before, old_version_info = version_info_match.groups()
                 result.write(before)
                 result.write(version.to_info())
                 logging.debug("__version_info__ replaced")
