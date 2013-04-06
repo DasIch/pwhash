@@ -45,5 +45,6 @@ Additional Notes
 
    other/security.rst
    other/contributing.rst
+   other/versioning.rst
    other/changelog.rst
    other/license.rst
