@@ -8,6 +8,3 @@ sphinx
 
 # scripts
 requests
-
-# pypi upload
-pypissh
