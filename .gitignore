@@ -5,6 +5,7 @@ __pycache__
 Vagrantfile
 docs/_build/*
 build/
+dist/
 *.so
 ^pwhash.json
 ^pwhashc.json

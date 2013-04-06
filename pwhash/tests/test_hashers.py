@@ -6,6 +6,8 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import os
+
 from pwhash import PasswordHasher
 from pwhash.hashers import (
     BCryptHasher, PBKDF2Hasher, PlainHasher, MD5Hasher, SHA1Hasher,
@@ -265,10 +267,20 @@ class TestPasswordHasher(HasherTestBase, SaltingTestMixin, UpgradableTestMixin):
         assert "pbkdf2" in str(warning.message)
         assert not recwarn.list
 
-    def test_from_config_file(self, recwarn):
+    @pytest.mark.parametrize(("path", "importable"), [
+        ("pwhashc.json", __name__),
+        (
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)),
+                "pwhashc.json"
+             ),
+             None
+        )
+    ])
+    def test_from_config_file(self, recwarn, path, importable):
         hasher = PasswordHasher.from_config_file(
-            "pwhashc.json",
-            relative_to_importable=__name__
+            path,
+            relative_to_importable=importable
         )
         assert not recwarn.list # no warnings issued
 

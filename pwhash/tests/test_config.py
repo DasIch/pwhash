@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 import os
+import sys
 from contextlib import contextmanager
 
 import pytest
@@ -19,7 +20,11 @@ from pwhash import config
 class TestConfigCLI(object):
     @contextmanager
     def spawn(self, command, *args, **kwargs):
-        p = pexpect.spawn("pwhash-config %s" % command, *args, **kwargs)
+        p = pexpect.spawn(
+            "pwhash-config %s" % command,
+            logfile=sys.stderr,
+            *args, **kwargs
+        )
         try:
             yield p
             p.expect(pexpect.EOF)

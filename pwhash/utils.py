@@ -84,7 +84,7 @@ determine_pbkdf2_rounds.__doc__ = """
         The amount of time that is acceptable for password hashing in seconds.
         You probably want this to be between 0.1 to 0.5 seconds.
 
-    This works by benchmarking :func`pwhash.algorithms.pbkdf2`, so this is
+    This works by benchmarking :func:`pwhash.algorithms.pbkdf2`, so this is
     something you want to perform only once for every machine when it's idle,
     with every update of pwhash, OpenSSL or CommonCrypto and with every method
     change and obviously parameter change. If you are re-determining the number
@@ -148,7 +148,11 @@ def constant_time_equal(a, b):
     """
     if len(a) != len(b):
         return False
-    return _timingsafe_bcmp.timingsafe_bcmp(a, b, len(a)) == 0
+    return _timingsafe_bcmp.timingsafe_bcmp(
+        ffi.new("char[]", a),
+        ffi.new("char[]", b),
+        len(a)
+    ) == 0
 
 
 class classproperty(property):

@@ -11,6 +11,7 @@ install:
   - pip install --use-mirrors -r requirements.txt
   - "if [[ $BCRYPT == 1 ]]; then pip install py-bcrypt; fi"
   - "if [[ $SCRYPT == 1 ]]; then pip install -e hg+https://bitbucket.org/mhallin/py-scrypt#egg=scrypt; fi"
+  - python setup.py check --metadata --strict
   - pip install .
 script:
   - py.test -v

@@ -12,7 +12,7 @@ import inspect
 import hashlib
 import warnings
 from binascii import hexlify, unhexlify
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 
 try:
     import scrypt
@@ -52,6 +52,31 @@ def generate_salt(salt_length):
     return os.urandom(salt_length)
 
 
+class PasswordHash(object):
+    """
+    Represents a password hash.
+
+    A password hash in general consists of the `name` of the hash function
+    used, the `hash` returned by that function and optionally further
+    `parameters` (excluding the hashed string) that were passed to the hash
+    function and are necessary to reconstruct the `hash`. All arguments passed
+    to :class:`PasswordHash` are accessible as attributes on the returned
+    instance.
+
+    Each parameter is available as a read-only attribute for convenience.
+    """
+    def __init__(self, name, hash, **parameters):
+        self.name = name
+        self.hash = hash
+        self.parameters = parameters
+
+    def __getattr__(self, attribute_name):
+        try:
+            return self.parameters[attribute_name]
+        except KeyError:
+            raise AttributeError(attribute_name)
+
+
 class Hasher(object):
     name = None
 
@@ -87,6 +112,10 @@ class Hasher(object):
         return 0 if self.max_hash_length is None else self.max_hash_length
 
     def parse(self, formatted_hash):
+        """
+        Parses `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash`.
+        """
         if not b"$" in formatted_hash:
             raise ValueError("name missing: %r" % formatted_hash)
         name, hash = formatted_hash.split(b"$", 1)
@@ -95,12 +124,20 @@ class Hasher(object):
             raise ValueError("expected %r hash, got %r" % (self.name, name))
         return hash
 
-    def create(self, password):
-        """
-        Returns a hash for `password`.
-        """
+    def _normalize_password(self, password):
         if isinstance(password, text_type):
             password = password.encode("utf-8")
+        return password
+
+    def create(self, password):
+        """
+        Returns a hash for `password`. If `password` is a unicode string it is
+        encoded using utf-8.
+
+        The hash returned is created by calling :meth:`format` with a
+        :class:`PasswordHash` instance.
+        """
+        password = self._normalize_password(password)
         # py-bcrypt does not allow \0 in passwords. That is a very annoying
         # restriction however at the moment there is no other implementation,
         # that is maintained and trustworthy.
@@ -111,13 +148,24 @@ class Hasher(object):
     def _create_from_bytes(self, password):
         raise NotImplementedError()
 
+    def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` instance and returns a byte string
+        containing all information needed to verify a hash.
+        """
+        return b"$".join([
+            native_to_bytes(parsed_hash.name),
+            hexlify(parsed_hash.hash)
+        ])
+
     def verify(self, password, formatted_hash):
         """
         Returns `True` if `formatted_hash` was created using `password`.
         """
-        if isinstance(password, text_type):
-            password = password.encode("utf-8")
-        return self._verify_from_bytes(password, formatted_hash)
+        return self._verify_from_bytes(
+            self._normalize_password(password),
+            formatted_hash
+        )
 
     def _verify_from_bytes(self, password, formatted_hash):
         return constant_time_equal(
@@ -148,10 +196,6 @@ class UpgradeableHasher(UpgradeableMixin, Hasher):
     pass
 
 
-_SCryptHash = namedtuple(
-    "_SCryptHash", ["salt", "nexp", "r", "p", "buflen", "hash"]
-)
-
 
 class SCryptHasher(UpgradeableHasher):
     """
@@ -174,49 +218,48 @@ class SCryptHasher(UpgradeableHasher):
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format({
-            "name": self.name,
-            "salt": salt,
-            "nexp": self.nexp,
-            "r": self.r,
-            "p": self.p,
-            "buflen": self.buflen,
-            "hash": scrypt.hash(
+        return self.format(PasswordHash(
+            self.name,
+            scrypt.hash(
                 password,
                 salt,
                 N=2 ** self.nexp,
                 r=self.r,
                 p=self.p,
                 buflen=self.buflen
-            )
-        })
+            ),
+            salt=salt,
+            nexp=self.nexp,
+            r=self.r,
+            p=self.p,
+            buflen=self.buflen
+        ))
 
-    def format(self, context):
+    def format(self, parsed_hash):
         return b"$".join([
-            native_to_bytes(context["name"]),
-            hexlify(context["salt"]),
-            int_to_bytes(context["nexp"]),
-            int_to_bytes(context["r"]),
-            int_to_bytes(context["p"]),
-            int_to_bytes(context["buflen"]),
-            hexlify(context["hash"])
+            native_to_bytes(parsed_hash.name),
+            hexlify(parsed_hash.salt),
+            int_to_bytes(parsed_hash.nexp),
+            int_to_bytes(parsed_hash.r),
+            int_to_bytes(parsed_hash.p),
+            int_to_bytes(parsed_hash.buflen),
+            hexlify(parsed_hash.hash)
         ])
 
     def parse(self, formatted_hash):
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         salt, nexp, r, p, buflen, hash = formatted_hash.split(b"$", 5)
-        return _SCryptHash(
-            unhexlify(salt),
-            int(nexp),
-            int(r),
-            int(p),
-            int(buflen),
-            unhexlify(hash)
+        return PasswordHash(
+            self.name,
+            unhexlify(hash),
+            salt=unhexlify(salt),
+            nexp=int(nexp),
+            r=int(r),
+            p=int(p),
+            buflen=int(buflen)
         )
 
-    def verify(self, password, formatted_hash):
-        if isinstance(password, text_type):
-            password = password.encode("utf-8")
+    def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
         return constant_time_equal(
             scrypt.hash(
@@ -241,12 +284,19 @@ class SCryptHasher(UpgradeableHasher):
             return self.create(password)
 
 
-_BCryptHash = namedtuple("_BCryptHash", ["cost", "hash"])
-
-
 class BCryptHasher(UpgradeableHasher):
     """
-    A hasher that uses bcrypt.
+    A hasher that uses bcrypt, implemented using py-bcrypt_. The `cost`
+    argument can be used to increase the performance/time required to hash a
+    password.
+
+    A good `cost` value can be determined using
+    :func:`pwhash.utils.determine_bcrypt_cost`.
+
+    Creating an instance may raise a :exc:`RuntimeError` if py-bcrypt_ is not
+    installed.
+
+    .. _py-bcrypt: http://www.mindrot.org/projects/py-bcrypt/
     """
     name = "bcrypt"
 
@@ -257,23 +307,37 @@ class BCryptHasher(UpgradeableHasher):
             raise RuntimeError("bcrypt unavailable; requires py-bcrypt >= 0.3")
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `cost` parameter,
+        corresponding to the arguments passed to :class:`BCryptHasher`.
+        """
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         cost, hash = formatted_hash.split(b"$", 1)
-        return _BCryptHash(int(cost), hash)
+        return PasswordHash(self.name, hash, cost=int(cost))
 
-    def format(self, context):
+    def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have an `cost` parameter
+        corresponding to the `cost` argument :class:`BCryptHasher` takes.
+        """
         return b"$".join([
-            native_to_bytes(context["name"]),
-            int_to_bytes(context["cost"]),
-            context["hash"]
+            native_to_bytes(parsed_hash.name),
+            int_to_bytes(parsed_hash.cost),
+            parsed_hash.hash
         ])
 
     def _create_from_bytes(self, password):
-        return self.format({
-            "name": self.name,
-            "cost": self.cost,
-            "hash": bcrypt.hashpw(password, bcrypt.gensalt(self.cost))
-        })
+        return self.format(PasswordHash(
+            self.name,
+            bcrypt.hashpw(password, bcrypt.gensalt(self.cost)),
+            cost=self.cost
+        ))
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
@@ -288,12 +352,27 @@ class BCryptHasher(UpgradeableHasher):
             return self.create(password)
 
 
-_PBKDF2Hash = namedtuple("_PBKDF2Hash", ["method", "rounds", "salt", "hash"])
-
-
 class PBKDF2Hasher(UpgradeableHasher):
     """
     A hasher that uses PBKDF2.
+
+    :param rounds: The number of rounds/iterations to be performed by pbkdf2,
+                   this parameter can be increased to increase performance/time
+                   required to hash passwords.
+
+    :param method: The hash function that should be used by pbkdf2 internally,
+                   theoretically possible values are
+                   ``"hmac-sha{1,224,256,384,512}"``, which of these can
+                   actually be used depends on the underlying implementation.
+
+    :param salt_length: The length of the salt that should be used.
+
+    PBKDF2 is implemented with bindings to CommonCrypto_ and OpenSSL_. As Apple
+    has deprecated OpenSSL due to issues with ABI compatibilty, CommonCrypto is
+    used on OS X.
+
+    .. _CommonCrypto: https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man3/Common%20Crypto.3cc.html
+    .. _OpenSSL: http://www.openssl.org/
     """
     name = "pbkdf2"
 
@@ -305,32 +384,51 @@ class PBKDF2Hasher(UpgradeableHasher):
         self.hash_length = DIGEST_SIZES[method]
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `rounds`, `method` and
+        `salt_length` parameter, corresponding to the arguments passed to
+        :class:`PBKDF2Hasher`.
+        """
         formatted_hash = UpgradeableHasher.parse(self, formatted_hash)
         method, rounds, salt, hash = formatted_hash.split(b"$")
-        return _PBKDF2Hash(
-            method.decode("ascii"), int(rounds), unhexlify(salt),
-            unhexlify(hash)
+        return PasswordHash(
+            self.name,
+            unhexlify(hash),
+            method=method.decode("ascii"),
+            rounds=int(rounds),
+            salt=unhexlify(salt)
         )
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format({
-            "name": self.name,
-            "method": self.method,
-            "rounds": self.rounds,
-            "salt": salt,
-            "hash": pbkdf2(
+        return self.format(PasswordHash(
+            self.name,
+            pbkdf2(
                 password, salt, self.rounds, self.hash_length, self.method
-            )
-        })
+            ),
+            method=self.method,
+            rounds=self.rounds,
+            salt=salt
+        ))
 
-    def format(self, context):
+    def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `rounds` and `method`
+        parameter, corresponding to the arguments passed to
+        :class:`PBKDF2Hasher` as well as a `salt` parameter of type `str`.
+        """
         return b"$".join([
-            native_to_bytes(context["name"]),
-            context["method"].encode("ascii"),
-            int_to_bytes(context["rounds"]),
-            hexlify(context["salt"]),
-            hexlify(context["hash"])
+            native_to_bytes(parsed_hash.name),
+            parsed_hash.method.encode("ascii"),
+            int_to_bytes(parsed_hash.rounds),
+            hexlify(parsed_hash.salt),
+            hexlify(parsed_hash.hash)
         ])
 
     def _verify_from_bytes(self, password, formatted_hash):
@@ -365,10 +463,7 @@ class PlainHasher(Hasher):
         return None
 
     def _create_from_bytes(self, password):
-        return self.format({"name": self.name, "hash": password})
-
-    def format(self, context):
-        return native_to_bytes(context["name"]) + b"$" + context["hash"]
+        return self.format(PasswordHash(self.name, password))
 
 
 class DigestHasher(Hasher):
@@ -376,14 +471,8 @@ class DigestHasher(Hasher):
 
     def _create_from_bytes(self, password):
         return self.format(
-            {"name": self.name, "hash": self._digest(password).digest()}
+            PasswordHash(self.name, self._digest(password).digest())
         )
-
-    def format(self, context):
-        return b"$".join([
-            native_to_bytes(context["name"]),
-            hexlify(context["hash"])
-        ])
 
 
 class MD5Hasher(DigestHasher):
@@ -434,9 +523,6 @@ class SHA512Hasher(DigestHasher):
     _digest = hashlib.sha512
 
 
-_SaltedDigestHash = namedtuple("_SaltedDigestHash", ["salt", "hash"])
-
-
 class SaltedDigestHasher(UpgradeableHasher):
     _digest = None
 
@@ -445,23 +531,36 @@ class SaltedDigestHasher(UpgradeableHasher):
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format({
-            "name": self.name,
-            "salt": salt,
-            "hash": self._digest(salt + password).digest()
-        })
+        return self.format(PasswordHash(
+            self.name,
+            self._digest(salt + password).digest(),
+            salt=salt
+        ))
 
-    def format(self, context):
+    def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `salt` parameter of type
+        `str`.
+        """
         return b"$".join([
-            native_to_bytes(context["name"]),
-            hexlify(context["salt"]),
-            hexlify(context["hash"])
+            native_to_bytes(parsed_hash.name),
+            hexlify(parsed_hash.salt),
+            hexlify(parsed_hash.hash)
         ])
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `salt` parameter.
+        """
         formatted_hash = Hasher.parse(self, formatted_hash)
         salt, hash = formatted_hash.split(b"$", 2)
-        return _SaltedDigestHash(unhexlify(salt), hash)
+        return PasswordHash(self.name, hash, salt=unhexlify(salt))
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
@@ -522,9 +621,6 @@ class SaltedSHA512Hasher(SaltedDigestHasher):
     _digest = hashlib.sha512
 
 
-_HMACHash = namedtuple("_HMACHash", ["salt", "hash"])
-
-
 class HMACHasher(UpgradeableHasher):
     _digest = None
 
@@ -533,22 +629,35 @@ class HMACHasher(UpgradeableHasher):
 
     def _create_from_bytes(self, password):
         salt = generate_salt(self.salt_length)
-        return self.format({
-            "name": self.name,
-            "salt": salt,
-            "hash": hmac.new(salt, password, self._digest).digest()
-        })
+        return self.format(PasswordHash(
+            self.name,
+            hmac.new(salt, password, self._digest).digest(),
+            salt=salt
+        ))
 
-    def format(self, context):
+    def format(self, parsed_hash):
+        """
+        Takes a :class:`PasswordHash` object as returned by :meth:`parse` and
+        returns a byte string that must be parseable by :meth:`parse`.
+
+        The given hash object is expected to have a `salt` parameter of type
+        `str`.
+        """
         return b"$".join([
-            native_to_bytes(context["name"]),
-            hexlify(context["salt"]),
-            hexlify(context["hash"])
+            native_to_bytes(parsed_hash.name),
+            hexlify(parsed_hash.salt),
+            hexlify(parsed_hash.hash)
         ])
 
     def parse(self, formatted_hash):
+        """
+        Parses a `formatted_hash` as returned by :meth:`format` and returns a
+        :class:`PasswordHash` object.
+
+        The returned hash object is expected to have a `salt` parameter.
+        """
         salt, hash = UpgradeableHasher.parse(self, formatted_hash).split(b"$", 1)
-        return _HMACHash(unhexlify(salt), hash)
+        return PasswordHash(self.name, hash, salt=unhexlify(salt))
 
     def _verify_from_bytes(self, password, formatted_hash):
         parsed = self.parse(formatted_hash)
@@ -719,8 +828,7 @@ class PasswordHasher(UpgradeableMixin):
 
     def create(self, password):
         """
-        Returns the a hash for the given `password` using
-        :attr:`preferred_hasher`.
+        Returns a hash for the given `password` using :attr:`preferred_hasher`.
         """
         password_length = len(password)
         if password_length < self.min_password_length:

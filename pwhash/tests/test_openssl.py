@@ -15,7 +15,9 @@ import pytest
 
 
 @pytest.mark.parametrize(("password", "salt", "rounds", "hash_length", "expected_hashes"), PBKDF2_TEST_VECTORS)
-def test_pbkdf2(password, salt, rounds, hash_length, expected_hashes):
+def test_pbkdf2(password, salt, rounds, hash_length, expected_hashes, run_fast):
+    if rounds > 100000 and run_fast:
+        pytest.skip(u"too slow for --fast")
     for method, expected_hash in expected_hashes.items():
         try:
             hash = hexlify(_openssl._pbkdf2(
